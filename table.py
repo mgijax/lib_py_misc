@@ -469,6 +469,7 @@ class Table:
 		self.filter = 0
 		self.group = 0
 		self.heading = None
+		self.heading_color = '#ffffff'
 		self.heading_align = 'center'
 		self.heading_nobreak = 0
 		self.heading_valign = 'top'
@@ -613,7 +614,8 @@ class Table:
 						+ str(self.heading[i]) +'</TH>'
 				s = s + prefix + middle + postfix
 
-			s = gsub('<TH', '<TH ALIGN=%s' % self.heading_align,s)
+			s = gsub('<TH', '<TH ALIGN=%s BGCOLOR=%s' % (self.heading_align,
+								     self.heading_color),s)
 
 		# find out if there's more than one "logical row" so we know
 		# what to do about swapping colors.  (If there are fewer than
