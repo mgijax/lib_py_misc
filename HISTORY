@@ -1,3 +1,10 @@
+TAG: lib_py_misc-1-0-23
+DATE: 02/12/2004
+STAFF: jsb, jw
+RELEASE: alpha
+CHANGES:
+1) enhanced table.py to allow colored table heading rows
+
 TAG: lib_py_misc-1-0-22
 DATE: 02/04/2004
 STAFF: jsb
