@@ -1,0 +1,6 @@
+TAG: lib_py_misc-1-0-21
+DATE: 10/27/2003
+STAFF: jsb
+RELEASE: alpha
+CHANGES:
+1) updated table.py to ensure left-aligned heading cells
