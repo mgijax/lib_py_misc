@@ -132,26 +132,90 @@ re_parm = regex.compile ('\${\([^}]+\)}')	# format like ${MYPARM}
 ###--- Functions ---###
 
 def find_path (
-	s = 'Configuration',	# string pathname for which we're looking
-	max = 10		# number of parent directory levels to search
+	s = 'Configuration'	# string pathname for which we're looking
 	):
-	# Purpose: find a relative path to the "nearest" instance of 's', up
-	#       to 'max' parent directories away
-	# Returns: relative path to 's'
+	# Purpose: find an absolute path to the "nearest" instance of 's',
+	#	first looking at the directory in which the current script
+	#	lives and then going up parent-by-parent to the root of this
+	#	directory hierarchy.
+	# Returns: absolute path to 's' or None if we can't find it
 	# Assumes: nothing
 	# Effects: nothing
 	# Throws: nothing
-	# Notes: This is a recursive function.  If 's' exists, we simply
-	#       return it.  If not, and if 'max' is zero, then we've searched
-	#       far enough, and we just return None.  Otherwise, look in the
-	#       parent directory of 's'.
+	# Notes: If you specify an absolute path for 's', we do not go up the
+	#	directory hierarchy -- it either exists or it doesn't.
 
-	if os.path.exists (s):
-		return s
-	elif max == 0:
+	if os.path.isabs (s):
+		# If we are passed an absolute path, then it either exists or
+		# it doesn't.  We don't do any further examination.
+
+		if os.path.exists (s):
+			return s
 		return None
-	else:
-		return find_path (os.path.join (os.pardir, s), max - 1)
+
+	# Otherwise, we have a relative path -- this should be relative to
+	# where the script resides, which we can get from the way it was
+	# called in argv[0]
+
+	script_path, script_name = os.path.split (sys.argv[0])
+
+	# if the 'script_path' is empty, that means that the 'script_name'
+	# was found using the user's PATH environment variable.  So, we need
+	# to track down where it was found.
+
+	if not script_path:
+		PATH = string.split (os.environ['PATH'], ':')
+		for dir in PATH:
+			if os.path.exists (os.path.join (dir, script_name)):
+				script_path = dir
+				break
+		else:
+			raise error, 'Cannot find %s in your PATH' % \
+				script_name
+
+	pieces = []	# initial set of pieces of the path to find 's',
+			# before any clean-up takes place
+
+	# if the 'script_path' is not absolute, then it is relative to the
+	# current working directory...
+
+	if not os.path.isabs (script_path):
+		pieces = string.split (os.getcwd(), os.sep)
+
+	# now consider the path to the script and the relative path given for
+	# the config file in 's'
+
+	pieces = pieces \
+		+ string.split (script_path, os.sep) \
+		+ string.split (s, os.sep)
+
+	# Now, go through all the 'pieces' of the path and handle any
+	# '.' and '..' directories that we find.  We will build a set of
+	# 'new_pieces' which will be the final components of our path.
+
+	new_pieces = []	
+	for item in pieces:
+		if item == os.curdir:			# ignore a .
+			pass
+		elif item == os.pardir:			# go up a level for ..
+			if len(new_pieces) > 0:
+				del new_pieces[-1]
+		else:					# append anything else
+			new_pieces.append (item)
+
+	pieces = new_pieces		# replace initial set with cleaned one
+	filename = pieces[-1:]		# the actual filename as a list
+
+	# now walk up the directory tree looking for the file each step of
+	# the way
+
+	i = len(pieces) - 1
+	while i >= 0:
+		path = os.sep + string.join (pieces[:i] + filename, os.sep)
+		if os.path.exists (path):
+			return path
+		i = i - 1
+	return None
 
 ###--- Classes ---###
 
@@ -180,6 +244,8 @@ class Configuration:
 		#	3. error, ERR_UNRECOGNIZED - if the config file has
 		#		a first line which specifies an unrecognized
 		#		format (not tab, sh, or csh)
+		#	4. propagates error from find_path if we cannot find
+		#		the script in the user's PATH
 
 		self.options = {}	# options[parm name] = string value
 
