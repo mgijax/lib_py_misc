@@ -183,6 +183,7 @@ __author__ = 'Glenn T. Colby   gtc@informatics.jax.org'
 # Imports
 # =======
 
+import types
 import cgi
 import regsub
 import string
@@ -482,6 +483,10 @@ class Table:
 		self.tabletitle = tabletitle
 		self.unescape = 0
 		self.width = '100%'
+		
+		self.cellAdornments = {}	# maps column number to string
+						# of adornments to go in the
+						# TD tag
 
 		# Now overlay the keyword arguments from caller
 		for k in kw.keys():
@@ -544,6 +549,49 @@ class Table:
 		#	not just a continuation of the previous row.
 
 		return 1		# always consider as a new row
+
+	def adorn (self,
+		columnNumbers,	# integer or list of integers
+		adornment	# string; HTML to go in the <TD> tag
+		):
+		# Purpose: ensure that the given 'adornment' is included in
+		#	the <TD> tag for the column(s) specified in
+		#	'columnNumbers'.  Columns are numbered starting with
+		#	zero.
+		# Returns: nothing
+		# Assumes: nothing
+		# Effects: alters self.cellAdornments
+		# Throws: nothing
+
+		if type(columnNumbers) != types.ListType:
+			columnNumbers = [ columnNumbers ]
+
+		for cell in columnNumbers:
+		    if self.cellAdornments.has_key(cell):
+			self.cellAdornments[cell] = '%s %s' % (adornment,
+				self.cellAdornments[cell])
+		    else:
+		    	self.cellAdornments[cell] = adornment + ' '
+
+		return
+
+	def adornments (self,
+		columnNumber	# integer; column number we are formatting
+		):
+		# Purpose: retrieve any adornments needed for the <TD> tag for
+		#	the given 'columnNumber'.
+		# Returns: string; will be an empty string if no adornments
+		#	have been added for the given 'columnNumber'
+		# Assumes: nothing
+		# Effects: nothing
+		# Throws: nothing
+		# Notes: adornments are added to a column using the 'adorn()'
+		#	method, above.
+		# Example: (opt)
+
+		if self.cellAdornments.has_key(columnNumber):
+			return self.cellAdornments[columnNumber]
+		return ''
 
 	def __netscape(self):
 		"""Generates an HTML Table object using Netscape-style tags."""
@@ -642,16 +690,33 @@ class Table:
 				i = i + 1
 			color = self.colors[i % num_colors]
 
-			prefix = '<TR VALIGN=%s BGCOLOR="%s"> ' % \
-				(self.cell_valign, color) \
-				+ '<TD Align=%s>' % self.column1_align
-			postfix = '</TD> </TR>\n'
-			infix = '</TD> <TD Align='+self.cell_align+'>'
-			s = s + prefix + \
-				string.join(
-					map (self.fixBlank, row),
-					infix) + \
-				postfix
+			# We now use a new way of generating the table rows.
+			# Doing it this way allows us to adorn the cells for
+			# certain columns with extra attributes in their
+			# <TD> tags, like NOWRAP.  For backward compatability,
+			# we continue to handle cell alignment in the
+			# traditional way.
+
+			list = [ '<TR VALIGN="%s" BGCOLOR="%s">' % \
+					(self.cell_valign, color) ]
+
+			cellNum = 0
+			align = self.column1_align
+
+			for cell in row:
+				list.append ('<TD %sALIGN="%s">%s</TD>' %
+					(self.adornments(cellNum),
+					 align,
+					 self.fixBlank(cell) ) )
+
+				if cellNum == 0:
+					align = self.cell_align
+
+				cellNum = cellNum + 1 
+
+			list.append ('</TR>\n')
+			s = s + string.join(list,'')
+
 			lastRow = row
 
 		#close table
