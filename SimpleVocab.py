@@ -336,6 +336,8 @@ class PhenoSlimTerm (Term):
 		# break out the definition and example, if we can
 
 		splitPos = string.find (note, '\\nExample:')
+		if splitPos == -1:
+			splitPos = string.find (note, '\012Example:')
 
 		if splitPos == -1:
 			self.definition = None
