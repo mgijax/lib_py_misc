@@ -697,14 +697,14 @@ class Table:
 			# we continue to handle cell alignment in the
 			# traditional way.
 
-			list = [ '<TR VALIGN="%s" BGCOLOR="%s">' % \
+			list = [ '<TR VALIGN=%s BGCOLOR="%s"> ' % \
 					(self.cell_valign, color) ]
 
 			cellNum = 0
 			align = self.column1_align
 
 			for cell in row:
-				list.append ('<TD %sALIGN="%s">%s</TD>' %
+				list.append ('<TD %sAlign=%s>%s</TD> ' %
 					(self.adornments(cellNum),
 					 align,
 					 self.fixBlank(cell) ) )
