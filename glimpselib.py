@@ -86,6 +86,6 @@ def search( pattern, directory_name, options='' ):
 #  is prohibited without the prior express written permission of the Jackson 
 #  Laboratory.
 # 
-# Copyright © 1996, 1999, 2000 by The Jackson Laboratory
+# Copyright © 1996, 1999, 2002 by The Jackson Laboratory
 # All Rights Reserved
 #
