@@ -212,6 +212,8 @@ def browser_is_netscape():
 def filter_html( s ):
 	"""Strips HTML tags from a string."""
 
+	if string.find (s, '<') == -1:		# short-circuit to avoid slow
+		return s			# gsub call, if possible
 	return gsub( '<[^>]*>', '', s )
 
 
@@ -242,6 +244,8 @@ def escape( s ):
 def unescape(s):
 	"""Opposite of escape()."""
 
+	if string.find (s, '&') == -1:		# short-circuit to avoid slow
+		return s			# gsub call, if possible
 	s = gsub("&amp;", "&", s)
 	s = gsub("&lt;", "<", s)
 	s = gsub("&gt;", ">", s)
@@ -705,7 +709,11 @@ class Table:
 
 		if not self.cell_line_breaks:
 			for i in range(len(self.body)):
-				for j in range(len(self.body[i])):
+			    for j in range(len(self.body[i])):
+				# only call the slow gsub() function if we
+				# determine that we really need to:
+
+				if string.find (self.body[i][j], '\n') != -1:
 					self.body[i][j] = gsub('\n', ' ',	
 						self.body[i][j])
 
