@@ -46,7 +46,7 @@ def set (sec,		# integer; how many secs ahead do you want the alarm?
 	#	with them or not.
 	global alarmClock
 
-	alarmClock.setAlarm (sec, None)
+	alarmClock.setAlarm (sec, fn)
 	return
 
 def clear ():
