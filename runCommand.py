@@ -108,6 +108,9 @@ class UnixCommand:
 		#	effects will vary depending on the command
 		# Throws: nothing
 
+		sys.stdout.flush()		# clean out stdout and stderr
+		sys.stderr.flush()		# before we capture them
+
 		(out_r, out_w) = os.pipe()	# create a pipe for stdout
 		(err_r, err_w) = os.pipe()	# create a pipe for stderr
 		pid = os.fork()			# fork a child process
@@ -145,7 +148,9 @@ class UnixCommand:
 			# run the command, catch the exit code, and bail out:
 
 			self.exitCode = shiftExitCode(os.system(self.command))
-			sys.exit(self.exitCode)
+			os.close(out_w)
+			os.close(err_w)
+			os._exit(self.exitCode)
 		return self.exitCode
 
 	def getStdOut (self):
