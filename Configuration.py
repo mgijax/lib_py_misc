@@ -164,7 +164,6 @@ def get_Configuration (
 
 	key = (filename, findFile)
 	if MEMORY.has_key (key):
-		print 'finding %s' % str(key)
 		return MEMORY[key]
 
 	# Otherwise, read and parse the file, create the Configuration object,
@@ -172,7 +171,6 @@ def get_Configuration (
 
 	config = Configuration (filename, findFile)
 	MEMORY[key] = config
-	print 'remembering %s' % str(key)
 	return config
 
 def find_path (
