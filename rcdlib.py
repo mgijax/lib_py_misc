@@ -40,7 +40,10 @@
 #	trailing whitespace.
 # Constants may be defined outside the scope of a record by using the same
 #	name = value notation.  A constant may then be cited in future lines
-#	using ${name} notation.
+#	using ${name} notation.  It is possible to use $$ notation to say
+#	"no, I really want a $ here -- don't evaluate the constant".  For
+#	example, "xyz$${ABC}pqr" evaluates to simply "xyz${ABC}pqr"; it does
+#	not try to find a value for a constant named ABC.
 # The # sign indicates that the rest of the line is a comment and should be
 #	ignored.
 # The \ is a line continuation character.  It will join the next line to the
@@ -64,7 +67,8 @@
 #
 # [					# and the second record
 # email = mmm
-# title = ${SSE} III
+# title = ${SSE} III			# multi-valued field on multiple lines
+# title = Meeting Coordinator
 # ]
 
 # Using the RcdFile and Rcd classes to parse this file would involve, for
@@ -89,20 +93,14 @@ error = 'rcdlib.error'		# exception raised in this module
 
 # messages passed along when the exception is raised
 
-NO_EQUALS = 'Line %d is missing an expected equals sign (=)'
+NO_EQUALS = 'Missing an expected equals sign (=) on line %d'
 BAD_CONSTANT = 'Unknown constant "%s" cited on line %d'
 NON_UNIQUE = 'Encountered a duplicated key "%s" above line %d'
 MISSING_KEY = 'Encountered a record with no key "%s" above line %d'
 BAD_MARKUP = 'File did not terminate as expected.  Check all [, ], and \\'
 PROGRAMMER_ERROR = 'Programmer error.  The program is in a bad state...'
-
-###--- State indicators ---###
-
-# These are used to remember what state we are in when we're parsing the file
-
-IN_RCD = 0	# currently in an Rcd record
-OUT_RCD = 1	# currently outside an Rcd record
-IN_FIELD = 2	# currently inside a multi-line field in an Rcd record
+EXTRA_OPEN = 'Encountered an extra open bracket ([) on line %d'
+EXTRA_CLOSE = 'Encountered an extra closing bracket ([) on line %d'
 
 ###--- Public Classes ---###
 
@@ -133,43 +131,33 @@ class RcdFile:
 		#	'error' if there are problems parsing the file's
 		#	contents
 
+		# These constants are used to remember what state we are in
+		# when we're parsing the file
+
+		IN_RCD = 0	# currently in an Rcd record
+		OUT_RCD = 1	# currently outside an Rcd record
+
 		self.rcds = {}			# the set of Rcd objects
 		self.constants = {}		# set of constants
 		self.filename = filename	# name of the file to read
 
-		fp = open (filename, 'r')
-		lines = fp.readlines()
-		fp.close()
+		fp = open (filename, 'r')	# open the file for reading
 
 		state = OUT_RCD		# initially, we're outside an Rcd def
-		lineNum = 0		# no lines examined yet
 
-		for line in lines:
-			lineNum = lineNum + 1
+		name, value, lineCt = readAndParseLine (fp)
 
-			# trim off anything following a comment delimiter
+		# name=None and value=None signals the end of the file, so
+		# keep going until then
 
-			commentPos = string.find (line, '#')
-			if commentPos != -1:
-				line = line[:commentPos]
-
-			# strip all leading and trailing whitespace, and skip
-			# the line if it is then empty
-
-			line = string.strip (line)
-			if not line:
-				continue
-
-			# otherwise, our actions are dictated by what state
-			# we're currently in
-
+		while name or value:
 			if state == IN_RCD:
 
 				# we're currently inside the definition for an
 				# Rcd object.  If we've hit the closing marker
 				# then we need to add the object to our set.
 
-				if line == ']':
+				if name == ']':
 
 					# raise errors if the Rcd object is
 					# missing a key or if it has the same
@@ -177,11 +165,11 @@ class RcdFile:
 
 					if not rcd.has_key(keyName):
 						raise error, MISSING_KEY % \
-							(keyName, lineNum)
+							(keyName, lineCt)
 					key = rcd[keyName]
 					if self.rcds.has_key (key):
 						raise error, NON_UNIQUE % \
-							(key, lineNum)
+							(key, lineCt)
 
 					# otherwise, save it in our set.
 
@@ -192,28 +180,16 @@ class RcdFile:
 					# the next line
 
 					state = OUT_RCD
-					continue
 
-				# if we didn't find a closing marker, then we
-				# need to look at this line as defining an
-				# attribute for the current Rcd object.
+				elif name == '[':
+					raise error, EXTRA_OPEN % lineCt
 
-				name, value = splitLine(line, lineNum)
-				if value and value[-1] == '\\':
+				# this line defines an attribute for the
+				# current Rcd object.
 
-					# if we end with a line continuation
-					# character (\), then change to the
-					# IN_FIELD state
-
-					state = IN_FIELD
-					value = string.rstrip(value[:-1]) + \
-						' '
 				else:
-					# otherwise, we have a single-line
-					# attribute to add
-
 					rcd.add (name, substitute (value,
-						self.constants, lineNum))
+						self.constants, lineCt))
 
 			elif state == OUT_RCD:
 
@@ -221,48 +197,31 @@ class RcdFile:
 				# object, so we need to look for a marker
 				# signalling the start of a new object.
 
-				if line == '[':
+				if name == '[':
 					state = IN_RCD
 					rcd = rcdClass()
-					continue
 
-				# Otherwise, this line must define a constant
+				# Otherwise, this line defines a constant
 				# to be added to our set of constants.
 
-				name, value = splitLine(line, lineNum)
-				self.constants[name] = substitute (value,
-					self.constants, lineNum)
-
-			elif state == IN_FIELD:
-
-				# The current line is the continuation of the
-				# previous line.  Look at the end to see if it
-				# is continued further onto the next line.
-
-				if line[-1] == '\\':
-					line = string.rstrip(line[:-1]) + ' '
-					value = value + line
 				else:
-					# If not, then this line concludes the
-					# attribute's definition, so add it
-					# and go back to the normal IN_RCD
-					# state.
+					self.constants[name] = substitute ( \
+						value, self.constants, lineCt)
 
-					state = IN_RCD
-					value = value + line
-					rcd.add (name, substitute (value,
-						self.constants, lineNum))
 			else:
 				# This should never occur, but let's trap it
 				# just to be sure.
 
 				raise error, PROGRAMMER_ERROR
 
+			name, value, lineCt = readAndParseLine (fp, lineCt)
+
 		# If we run out of lines and we're still inside an Rcd object
 		# definition, then there was a problem somewhere.
 
 		if state != OUT_RCD:
 			raise error, BAD_MARKUP
+		fp.close()
 		return
 
 	def __getitem__ (self,
@@ -408,12 +367,11 @@ class Rcd:
 		# Assumes: nothing
 		# Effects: nothing
 		# Throws: nothing
-		# Notes: If 'key' has no value defined, then we return an
-		#	empty string -- ''
+		# Notes: If 'key' has no value defined, then we return None
 
 		if self.values.has_key (key):
 			return self.values[key]
-		return ''
+		return None
 
 	def __setitem__ (self,
 		key,		# string; fieldname to define
@@ -501,13 +459,15 @@ class Rcd:
 		# Assumes: nothing
 		# Effects: nothing
 		# Throws: nothing
-		# Notes: If 'key' is not defined, they you will get back a
-		#	list containing an empty string -- ['']
+		# Notes: If 'key' is not defined, they you will get back an
+		#	empty list.
 
 		item = self[key]
 		if type(item) == types.StringType:
 			return [ item ]
-		return item
+		elif item == None:
+			return []
+		return item		# item already is a list
 
 	def getAsString (self,
 		key,		# string; fieldname to retrieve
@@ -526,6 +486,8 @@ class Rcd:
 		item = self[key]
 		if type(item) == types.ListType:
 			return string.join (item, delimiter)
+		elif item == None:
+			return ''
 		return item
 
 	def getAsCompiledRegex (self,
@@ -534,19 +496,23 @@ class Rcd:
 		# Purpose: compile the value of 'key' into a compiled regular
 		#	expression and return it
 		# Returns: a regular expression object or a list of them, if
-		#	'key' has multiple values
+		#	'key' has multiple values; or None if 'key' is not
+		#	defined
 		# Assumes: the value(s) for 'key' are valid regexes
 		# Effects: nothing
 		# Throws: propagates regex.error if one of the values does not
 		#	compile properly into a regular expression object
 		# Notes: We maintain a set of regular expressions we have
 		#	compiled so that we don't need to recompile them if
-		#	the user requests one for 'key' again.
+		#	the user requests one for 'key' again.  If 'key' is
+		#	not defined, this function returns None.
 
 		if not self.regex.has_key (key):
 			item = self[key]
 			if type(item) == types.StringType:
 				self.regex[key] = regex.compile (item)
+			elif item == None:
+				self.regex[key] = None
 			else:
 				self.regex[key] = []
 				for i in item:
@@ -556,28 +522,95 @@ class Rcd:
 
 ###--- Private Functions ---###
 
-def splitLine (
-	s,		# string; a line of input
-	lineNum		# integer; what line number is 's' in the input?
+def readAndParseLine (
+	fp,		# file pointer from which to read
+	lineCt = 0	# integer; counter of lines read so far
 	):
-	# Purpose: breaks input line 's' into a name, value pair based on the
-	#	position of an equals sign (=)
-	# Returns: a tuple of two strings -- the name and the value
-	# Assumes: 's' has no leading or trailing whitespace
-	# Effects: nothing
-	# Throws: 'error' if 's' does not contain an equals sign
-	# Notes: Neither item returned will have leading or trailing
-	#	whitespace.
+	# Purpose: read the next logical line and return a (name, value) tuple
+	# Returns: three-item tuple containing...
+	#	(name, value, lineCt) if the next logical line defines a pair
+	#	(delim, None, lineCt) if the next logical line contains a
+	#		record delimiter (either '[' or ']')
+	#	(None, None, lineCt) if no logical lines left.
+	#	In each case, the lineCt returned has been updated according
+	#	to the actual number of lines read from the file so far.
+	# Assumes: nothing
+	# Effects: reads one or more lines from 'fp'
+	# Throws: IOError if we have problems reading from 'fp'
+	# Notes: This function looks for the next logical line by stripping
+	#	out comments and combining lines joined by a line continuation
+	#	character (\).
 
-	eqPos = string.find (s, '=')
-	if eqPos == -1:
-		raise error, NO_EQUALS % lineNum
-	name = string.rstrip(s[:eqPos])
-	value = string.lstrip(s[eqPos+1:])
-	return name, value
+	name = None
+	value = None
+
+	line = fp.readline()
+	lineCt = lineCt + 1
+
+	while line:
+
+		# trim off anything following a comment delimiter
+
+		commentPos = string.find (line, '#')
+		if commentPos != -1:
+			line = line[:commentPos]
+
+		# trim off any leading and trailing whitespace
+
+		line = string.strip(line)
+
+		# if 'name' has a value, then we know that we're on a
+		# continued line.  Otherwise, it's a new line.
+
+		if name:
+			# if the line we just read is also continued, then
+			# just add it to the current value (minus the slash)
+
+			if line[-1] == '\\':
+				value = '%s %s' % (value,
+					string.rstrip(line[:-1]))
+
+			# otherwise, add it to the value and return.
+			else:
+				value = '%s %s' % (value, line)
+				return name, value, lineCt
+		else:
+			# if we read a line with just a square bracket, then
+			# return it
+
+			if line in [ '[', ']' ]:
+				return line, value, lineCt
+
+			# otherwise, try to split the line on the first equals
+			# sign.  if we can, then we have the name and value.
+
+			eqPos = string.find (line, '=')
+			if eqPos != -1:
+				name = string.rstrip(line[:eqPos])
+				value = string.lstrip(line[eqPos+1:])
+
+				# if the value isn't marked as a continued
+				# line, then we can return.  Otherwise, trim
+				# off the slash.
+
+				if value[-1] != '\\':
+					return name, value, lineCt
+				value = string.rstrip(line[:-1])
+
+			# check that we don't have a blank line.  if we don't,
+			# then we know that we should have a line with an
+			# equals sign on it.
+
+			elif line:
+				raise error, NO_EQUALS % lineCt
+
+		line = fp.readline()
+		lineCt = lineCt + 1
+
+	return None, None, lineCt	# we reached the end of the file
 
 def substitute (
-	s,		# string; a line of input
+	s,		# string; the string on which to perform substitution
 	dict,		# dictionary; maps string names to string values
 	lineNum		# integer; what line number is 's' in the input?
 	):
@@ -592,7 +625,7 @@ def substitute (
 	# Notes: We also handle the case of $${...} notation, so for example
 	#		substitute ('tuvw$${ABC}', { 'ABC' : 'xyz' }, 1)
 	#	would return:
-	#		'tuvw${xyz}'
+	#		'tuvw${ABC}'
 	# Example: As an example using a single $ sign, consider:
 	#		substitute ('tuvw${ABC}', { 'ABC' : 'xyz' }, 1)
 	#	would return:
@@ -612,24 +645,24 @@ def substitute (
 				#	we copied characters into 't'.
 	while pos != -1:
 
-		# Copy characters up to where the ${...} starts to 't', and
-		# ensure that the constant named in ${...} is in 'dict'.
-
-		t = t + s[last:pos]
-		name = variable_re.group(1)
-		if not dict.has_key (name):
-			raise error, BAD_CONSTANT % (name, lineNum)
-
-		# Check for the case where we had two $ signs.  If there were
-		# two, the constant's value needs to go in {}.
+		# if we found part of a $${name} entry, then just chop off the
+		# first dollar sign and keep the rest of the string
 
 		if s[pos-1] == '$':
-			t = '%s{%s}' % (t, dict[name])
+			t = t + s[last:pos-1] + s[pos:variable_re.regs[0][1]]
+
+		# otherwise, add up to the beginning of the ${name}, look up
+		# the value for that constant's name, and add it.
+
 		else:
+			t = t + s[last:pos]
+			name = variable_re.group(1)
+			if not dict.has_key (name):
+				raise error, BAD_CONSTANT % (name, lineNum)
 			t = t + dict[name]
 
-		# remember the last character matched by the regex and go
-		# look for the next occurrence
+		# remember the last character position matched by the regex
+		# and go look for the next occurrence
 
 		last = variable_re.regs[0][1]
 		pos = variable_re.search (s, last)
