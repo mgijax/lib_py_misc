@@ -456,6 +456,25 @@ def addQuotes (list):
 	# return a copy of list, with each element in double quotes
 	return map (lambda x : '"%s"' % x, list)
 
+def joinPaths (*item):
+	# Purpose: join all the items passed in into one path, which we return
+	# Returns: string; see Purpose
+	# Assumes: nothing
+	# Effects: nothing
+	# Throws: nothing
+	# Notes: The same rules which apply to os.path.join() apply here.
+	#	The most interesting case is:
+	#		a = '/a/b/c'
+	#		b = '/d/e/f'
+	#		joinPaths (a, b) ==> '/d/e/f'
+	#	This is because any full path on the right causes any path on
+	#	the left to be ignored.
+
+	s = ''
+	for i in item:
+		s = os.path.join (s, i)
+	return s
+
 # Warranty Disclaimer and Copyright Notice
 #
 #  THE JACKSON LABORATORY MAKES NO REPRESENTATION ABOUT THE SUITABILITY OR 
