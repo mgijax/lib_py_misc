@@ -8,10 +8,76 @@ import time
 import regex
 import sys
 from signal import signal, alarm, SIGALRM
+import runCommand
+
+###--- Exception Information ---###
+error = 'mkdirs.error'          # exception raised by mkdirs function
+
+# messages passed along when the exception is raised
+IS_FILE = '"%s": Already exists as a file'
+
+###--- Functions ---###
+
+def mkdirs(path,                        # string, the path to make
+             permissions = '0775'):     # string, octal abs permissions mode
+
+        # Purpose: create all intermediate directories in 'path' needed to
+        #               contain the leaf directory.  Set mode to 'permissions'
+        # Returns: 'path' if any directories are created.
+        #               'None' if path already exists
+        # Assumes: 'permissions' is a valid permissions mode
+        # Effects: creates directories
+        #          applies 'permissions' to all directories created
+        # Throws: 'error' if Unix mkdir fails or path exists as a file
+        # Example 1 :
+        #       path = '/home/sc/this/is/a/test'
+        #       results = mkdirs.mkdirs(path, '2755')
+        #       if results == None:
+        #               print 'Path %s already exists' %s path
+        #       else:
+        #               print 'Directories created'
+        # Example 2: default permissions are used
+        #       results = mkdirs.mkdirs(path)
 
 
-# Functions
-###########
+        # if 'path' not absolute, create relative to current working dir
+        if not os.path.isabs(path):
+                path = os.path.join(os.getcwd(), path)
+
+        # if 'path' exists but is a file raise 'error'
+        if os.path.isfile(path):
+                raise error, IS_FILE % path
+
+        # if 'path' exists return None
+        if os.path.isdir(path):
+                return None
+
+        # else split 'path' into existing and non-existing sections
+        else:
+                # after loop dirsToCreate = all dirs in path that do not exist
+                dirsToCreate = []
+
+                # after loop head = all dirs in path that exist
+                head = path
+
+                # while the leaf dir of head does not exist
+                while not os.path.isdir(head):
+                        # split the leaf dir from head
+                        (head, leaf) = os.path.split(head)
+
+                        # prepend 'leaf' to dirsToCreate
+                        dirsToCreate.insert(0, leaf)
+
+        # create directories relative to head for each dir in dirsToCreate
+        # with mode 'permissions'
+        for dir in dirsToCreate:
+                head = os.path.join(head, dir)
+                cmd = 'mkdir -m %s -p %s' % (permissions, head)
+                (stdout, stderr, exitCode) = runCommand.runCommand(cmd)
+                if exitCode or stderr:
+                       raise error, stderr
+
+        return head
 
 def olddebug(object):
 	sys.stderr.write(
