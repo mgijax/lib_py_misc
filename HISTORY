@@ -1,3 +1,10 @@
+TAG: lib_py_misc-1-0-24
+DATE: 03/26/2004
+STAFF: jsb
+RELEASE: alpha
+CHANGES:
+1) enhanced table.py to allow NOWRAP (and other attributes) for columns
+
 TAG: lib_py_misc-1-0-23
 DATE: 02/12/2004
 STAFF: jsb, jw
