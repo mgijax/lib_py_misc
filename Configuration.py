@@ -106,7 +106,7 @@ re_tabbed = regex.compile ('\([^\t\n ]*\)'	# parameter name
 			'''['"]?''')		# optional quote
 
 # parse a Bourne shell-formatted line:
-re_shell = regex.compile ('\([^\t ]*\)'		# parameter name
+re_shell = regex.compile ('\([^\t =]*\)'	# parameter name
 			'''[\t ]*=[\t ]*'''	# spacing, =, spacing
 			'''['"]?'''		# optional quote
 			'''\([^'"\n]*\)'''	# parameter value
