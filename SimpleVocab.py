@@ -218,7 +218,7 @@ class SimpleVocab:
 			_Term_key = row['_Term_key']
 			if not synonym_cache.has_key (_Term_key):
 				synonym_cache[_Term_key] = []
-			synonym_cache.append (row['synonym'])
+			synonym_cache[_Term_key].append (row['synonym'])
 
 		# collect the accession ID for each term
 		# (we do it in a separate query in case some terms do not
