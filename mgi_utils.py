@@ -15,52 +15,11 @@ from types import *
 error = 'mgi_utils.error'          # standard exception raised by the module
 
 # messages passed along when an exception is raised
+# mkdirs error
 IS_FILE = '"%s": Already exists as a file'
-HANDLER_ERR = '''Usage: handleError(<integer>, [string]) or 
-		handleError(<string>)'''
+
 ###--- Functions ---###
 
-def handleUserMessage(message): # string 
-
-        # Purpose: Print 'message' to stdout
-	# Returns: nothing
-	# Effects: nothing
-	# Throws: nothing
-	 
-        print message
-	return
-
-def handleError(exitCode,               # integer or string
-                message = None):        # string - error message
-
-        # Purpose: exit with exitCode. Report exitCode and message, if it
-	#		exists, to stderr 
-	# Returns: nothing
-	# Assumes: nothing
-	# Effects: Calling process is terminated
-	# Throws:  'error' if two strings are passed as parameters
-	# Examples:
-	# 	ERR = 'This is an error'
-	# 1)	mgi_utils.handleError(ERR)
-	# 	This prints 
-	#		'This is an error'
-	#	
-	# 2)	mgi_utils.handleError(2, ERR)
-	#	This prints:
-	#		This is an error
-	#		Exiting with exit code 2 
-	# 3) This will raise an exception:
-	#	mgi_utils.handleError(string, string)
-
-        if message != None and type(exitCode) != IntType:
-		raise error, HANDLER_ERR 
-	elif message != None:
-		sys.stderr.write('%s%s' % (message, '\n'))
-                sys.stderr.write('Exiting with exit code %s%s' % (exitCode, '\n'))
-	else:
-		pass
-        sys.exit(exitCode)
-	return
 def mkdirs(path,                        # string, the path to make
              permissions = '0775'):     # string, octal abs permissions mode
 
