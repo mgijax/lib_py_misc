@@ -1,22 +1,13 @@
-'''
-# mgi_utils.py - A module for miscellaneous MGI tasks
-# 
-# (not web-interface specific, but may be for processing/generating html)
-'''
+# mgi_utils.py
+# a module for miscellaneous MGI tasks
 
 import os
 import string
+import types
 import time
 import regex
-import cgi
-import urllib
 import sys
 from signal import signal, alarm, SIGALRM
-
-
-# Aliases
-#########
-url_unescape = urllib.unquote	# For backward compatability
 
 
 # Functions
@@ -43,7 +34,7 @@ def show_count(obj):
 	# Note:
 	#	Used in summary and detail screens.
 	"""
-	if type(obj) is type(0):
+	if type(obj) is types.IntType:
 		count = obj
 	else:
 		try:
@@ -94,58 +85,6 @@ def pc(count):
 	"""
 
 	print show_count(count)
-
-
-def mgiCopyright():
-	"""Returns a string representation of the copyright for web pages."""
-
-	s = '''\
-<HR>
-<SMALL><H3>WARRANTY DISCLAIMER AND COPYRIGHT NOTICE</H3>
-THE JACKSON LABORATORY MAKES NO REPRESENTATION ABOUT THE SUITABILITY OR
-ACCURACY OF THIS SOFTWARE OR DATA FOR ANY PURPOSE, AND MAKES NO WARRANTIES,
-EITHER EXPRESS OR IMPLIED, INCLUDING THE WARRANTIES OF MERCHANTABILITY AND
-FITNESS FOR A PARTICULAR PURPOSE OR THAT THE USE OF THIS SOFTWARE OR DATA
-WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OF OTHER
-RIGHTS.  IT IS PROVIDED "AS IS."
-<P>
-This software and data are provided as a service to the scientific community
-to be used only for research and educational purposes.  Any commercial
-reproduction is prohibited without the prior written permission of The
-Jackson Laboratory.
-<P>
-</SMALL>
-Copyright &#169 1996 The Jackson Laboratory
-<BR>
-All Rights Reserved
-<BR>
-'''
-	return s
-
-
-def mgiRetrieve():
-	"""Returns a string representation of the retrieve button for forms."""
-
-	s = '''\
-<HR>
-<INPUT TYPE=submit VALUE="Retrieve"> <INPUT TYPE=reset VALUE="Reset Form">
-<HR>
-'''
-	return s
-
-
-def mgiMaxReturn():
-	"""Returns a string representation of the maxreturn section of forms."""
-
-	s = '''\
-<b>Max number of items returned:</b>
-<INPUT TYPE="radio" NAME="*limit" VALUE="10">10
-<INPUT TYPE="radio" NAME="*limit" VALUE="100" CHECKED>100
-<INPUT TYPE="radio" NAME="*limit" VALUE="500">500
-<INPUT TYPE="radio" NAME="*limit" VALUE="0">No limit
-<BR>
-'''
-	return s
 
 
 def vali_date(date):
@@ -278,125 +217,6 @@ class Tee:
 			self.fd.close()
 
 
-def get_fields(content = None):
-	"""Processes fields from an HTML form.
-	#
-	# Requires:
-	#	content -- A string containing form content.  A value of None
-	#		(default) means to read from sys.stdin.
-	#
-	# Effects:
-	#	- Reads from sys.stdin
-	#	
-	# Note:
-	#	This needs work big-time.
-	#
-	"""
-	fields = {}
-	operators = {}
-	types = {}
-	negates = {}
-
-	# Note -- httpd 1.3 does not close stdin
-	# read exactly CONTENT_LENGTH bytes or the script will hang
-	if content is None:
-		length = string.atoi(os.environ['CONTENT_LENGTH'])
-		content = sys.stdin.read(length)
-
-	tokens = string.splitfields(content, '&')
-	for i in range(0, len(tokens)):
-		mapping = string.splitfields(string.joinfields(
-			string.splitfields(string.strip(tokens[i]), '+'), ' '),
-			'=')
-		mapping[1] = string.strip(url_unescape(mapping[1]))
-		if mapping[1] == '':
-			continue
-		mapping = url_unescape(mapping[0]), mapping[1]
-		type = string.splitfields(mapping[0], ':')
-		if len(type) == 1:
-			fields[type[0]] = mapping[1]
-		elif type[0] == 'op':
-			operators[type[1]] = mapping[1]
-		elif type[0] == 'not':
-#
-#	Grabs all of fields that have a "checked" NOT operator.
-#
-			negates[type[1]] = mapping[1]
-		elif type[0] == 'list':
-			key = type[1]
-			if fields.has_key(key) == 0:
-				fields[key] = []
-			fields[key].append(mapping[1])
-		else:
-			fields[type[1]] = mapping[1]
-			types[type[1]] = type[0]
-	for key in fields.keys():
-		if types.has_key(key) and operators.has_key(key):
-			operator = operators[key]
-			if string.lower(operator) == 'is null':
-				del fields[key]
-				continue
-			if key == 'symbol':
-				l = string.split(fields[key], ',')
-				for i in range(len(l)):
-					l[i] = string.strip(l[i])
-
-				if operator == 'begins':
-					for i in range(len(l)):
-						l[i] = l[i] + '%'
-				elif operator == 'ends':
-					for i in range(len(l)):
-						l[i] = '%' + l[i]
-				elif operator == 'contains':
-					for i in range(len(l)):
-						l[i] = '%' + l[i] + '%'
-				elif string.lower(operator) == 'is null':
-					del fields[key]
-					continue
-				else:
-					fields[key] = l
-					continue
-				fields[key] = l
-				operators[key] = 'like'
-			elif types[key] == 'text':
-				if operator == 'begins':
-					fields[key] = fields[key] + '%'
-				elif operator == 'ends':
-					fields[key] = '%' + fields[key]
-				elif operator == 'contains':
-					fields[key] = '%' + fields[key] + '%'
-				elif string.lower(operator) == 'is null':
-					del fields[key]
-					continue
-				else:
-					continue
-				operators[key] = 'like'
-#
-#	Where NOT has been used alter the operator accordingly.
-#
-	for key in negates.keys():
-		if operators.has_key(key):
-			operator = operators[key]
-			if operator == '=':
-				operators[key] = '!' + operators[key]
-			elif operator == 'like':
-				operators[key] = 'not' + ' ' + operators[key]
-			elif string.lower(operator) == 'is null':
-				operators[key] = 'is not null'
-	result =  fields, operators, types
-	#olddebug(result)
-	return result
-
-
-def print_field(label, value):
-	sys.stdout.write('<B>%s</B>\t' % label)
-	if value is None:
-		print  'NULL'
-	else:
-		print str(value)
-	print '<BR>'
-
-
 def value(object):
 	if object is None:
 		return 'null'
@@ -423,20 +243,6 @@ def prvalue(object):
 		return ''
 	else:
 		return str(object)
-
-
-def escape(html):
-	"""Escapes '&', '<' and '>' characters as SGML entities.
-	#
-	# Note:
-	#	This was repaired in 10/97 to escape the '&' properly.  It was
-	#	not being done before that.
-	"""
-	if html is not None and type(html) is type(''):
-		html = cgi.escape(html)
-	else:
-		html = ''
-	return html
 
 
 def date( format = '%c' ):
@@ -481,12 +287,15 @@ def byNumeric( a, b ):
 	#	- Also, it's kinda slow.  :-)
 	#	- If either of the strings contain numeric substrings that are
 	#	  too big for string.atoi to handle, an exception is raised.
+	#	- Ren1 == ren2
 	#
 	# It's slow because passing any comparison function to the list sort
 	# method slows things to a crawl.
 	#
 	# Note:
-	#	Hao has written a new version of this that is being tested.
+	#	As this is both buggy and slow, code should probably be
+	#	migrated away from using this function.  A better solution is
+	#	in the symbolsort.py library.
 	"""
  
         def getIndex( s ): # returns the length of the first chunk.
@@ -498,7 +307,7 @@ def byNumeric( a, b ):
 			result = len( s )
 		return result
  
-	if type(a) != type('') or type(b) != type(''):
+	if type(a) != types.StringType or type(b) != types.StringType:
 		return cmp(a,b)
 
         indexA = getIndex( a )
@@ -533,21 +342,25 @@ def setAlarm(timeout, alarmclock=AlarmClock):
 	# Schedule a UNIX alarm call after timeout seconds
 	signal(SIGALRM, alarmclock)
 	alarm(timeout)
+
+def addQuotes (list):
+	# return a copy of list, with each element in double quotes
+	return map (lambda x : '"%s"' % x, list)
+
+# Warranty Disclaimer and Copyright Notice
 #
-# WARRANTY DISCLAIMER AND COPYRIGHT NOTICE 
+#  THE JACKSON LABORATORY MAKES NO REPRESENTATION ABOUT THE SUITABILITY OR 
+#  ACCURACY OF THIS SOFTWARE OR DATA FOR ANY PURPOSE, AND MAKES NO WARRANTIES, 
+#  EITHER EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR A 
+#  PARTICULAR PURPOSE OR THAT THE USE OF THIS SOFTWARE OR DATA WILL NOT 
+#  INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS, OR OTHER RIGHTS.  
+#  THE SOFTWARE AND DATA ARE PROVIDED "AS IS".
 #
-#    THE JACKSON LABORATORY MAKES NO REPRESENTATION ABOUT THE 
-#    SUITABILITY OR ACCURACY OF THIS SOFTWARE OR DATA FOR ANY 
-#    PURPOSE, AND MAKES NO WARRANTIES, EITHER EXPRESS OR IMPLIED, 
-#    INCLUDING THE WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
-#    A PARTICULAR PURPOSE OR THAT THE USE OF THIS SOFTWARE OR DATA 
-#    WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, 
-#    TRADEMARKS OF OTHER RIGHTS. IT IS PROVIDED "AS IS." 
+#  This software and data are provided to enhance knowledge and encourage 
+#  progress in the scientific community and are to be used only for research 
+#  and educational purposes.  Any reproduction or use for commercial purpose 
+#  is prohibited without the prior express written permission of the Jackson 
+#  Laboratory.
 #
-#    This software and data are provided as a service to the scientific 
-#    community to be used only for research and educational purposes. Any
-#    commercial reproduction is prohibited without the prior written 
-#    permission of The Jackson Laboratory. 
-#
-#    Copyright © 1996 The Jackson Laboratory All Rights Reserved 
-#
+# Copyright © 1996, 1999, 2000 by The Jackson Laboratory
+# All Rights Reserved
