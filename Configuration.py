@@ -99,8 +99,8 @@ re_comment = regex.compile ('\(#.*\)'		# comment
 			'\(^[ \t]*$\)')		# blank line
 
 # parse a tab or space-delimited line:
-re_tabbed = regex.compile ('\([^\t ]*\)'	# parameter name
-			'''[\t ]+['"]?'''	# spacing, optional quote
+re_tabbed = regex.compile ('\([^\t\n ]*\)'	# parameter name
+			'''[\t ]*['"]?'''	# spacing, optional quote
 			'''\([^'"\n]*\)'''	# parameter value
 			'''['"]?''')		# optional quote
 
@@ -121,7 +121,7 @@ re_cshell1 = regex.compile ('set[\t ]+'		# set keyword, spacing
 
 # parse a C-shell-formatted line using 'setenv':
 re_cshell2 = regex.compile ('setenv[\t ]+'	# setenv keyword, spacing
-			'''\([^\t ]*\)'''	# parameter name
+			'''\([^\t\n ]+\)'''	# parameter name
 			'''[\t ]*['"]?'''	# spacing, optional quote
 			'''\([^'"\n]*\)'''	# parameter value
 			'''['"]?''')		# optional quote
