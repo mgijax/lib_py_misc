@@ -50,16 +50,17 @@ def set_sqlFunction (
 class Term:
 	# IS: one term in a simple vocabulary
 	# HAS: the term itself, and its associated database key, abbreviation,
-	#	note, and synonyms
-	# DOES: provides accessor methods for the four public attributes--
-	#	term, abbreviation, note, and synonyms
+	#	note, synonyms, and accession ID
+	# DOES: provides accessor methods for the five public attributes--
+	#	term, abbreviation, note, synonyms, and accession ID
 
 	def __init__ (self,
 		_Term_key,	# integer; unique database key of the term
 		term,		# string; the term itself
 		abbreviation,	# string; abbreviation for the term
 		note = None,	# string; note associated with the term
-		synonyms = []	# list of strings; synonyms for the term
+		synonyms = [],	# list of strings; synonyms for the term
+		accID = None	# string; accession ID for the term
 		):
 		# Purpose: constructor
 		# Returns: nothing
@@ -72,6 +73,7 @@ class Term:
 		self.abbreviation = abbreviation
 		self.note = note
 		self.synonyms = synonyms
+		self.accID = accID
 		return
 
 	def getKey (self):
@@ -91,6 +93,15 @@ class Term:
 		# Throws: nothing
 
 		return self.term
+
+	def getAccID (self):
+		# Purpose: accessor method for the term's accession ID
+		# Returns: string or None
+		# Assumes: nothing
+		# Effects: nothing
+		# Throws: nothing
+
+		return self.accID
 
 	def getAbbreviation (self):
 		# Purpose: accessor method for the term's abbreviation
@@ -161,11 +172,11 @@ class SimpleVocab:
 
 		# In an OO-sense, it might be more "correct" to have each Term
 		# look up its own attributes using its key.  For the sake of
-		# efficiency, though, we look up all the notes and synonyms
-		# here in one batch and cache them for use in the
-		# Term-creation step later on.
+		# efficiency, though, we look up all the notes, synonyms, and
+		# accession IDs here in one batch and cache them for use in
+		# the Term-creation step later on.
 
-		[ note_rows, synonym_rows ] = sql ( [
+		[ note_rows, synonym_rows, accID_rows ] = sql ( [
 
 			'''select tx._Term_key, tx.note, tx.sequenceNum
 			from VOC_Term vt, VOC_Text tx
@@ -179,10 +190,15 @@ class SimpleVocab:
 			where vt._Term_key = vs._Term_key
 				and vt._Vocab_key = %s''' % self._Vocab_key,
 
+			'''select vtv._Term_key, vtv.accID
+			from VOC_Term_View vtv
+			where vtv._Vocab_key = %s''' % self._Vocab_key,
+
 			], 'auto')
 
 		note_cache = {}		# maps _Term_key to string note
 		synonym_cache = {}	# maps _Term_key to list of synonyms
+		accID_cache = {}	# maps _Term_key to string accID
 
 		# Initially, the notes are stored in 256-byte chunks.  So,
 		# we first collect the chunks in a list and then convert
@@ -203,6 +219,13 @@ class SimpleVocab:
 			if not synonym_cache.has_key (_Term_key):
 				synonym_cache[_Term_key] = []
 			synonym_cache.append (row['synonym'])
+
+		# collect the accession ID for each term
+		# (we do it in a separate query in case some terms do not
+		# have accession IDs)
+
+		for row in accID_rows:
+			accID_cache[row['_Term_key']] = row['accID']
 
 		# now get the term attributes and build Term objects
 
@@ -229,6 +252,13 @@ class SimpleVocab:
 			else:
 				synonyms = []
 
+			# look up accession ID, if one exists
+
+			if accID_cache.has_key (_Term_key):
+				accID = accID_cache[_Term_key]
+			else:
+				accID = None
+
 			# instantiate an object of the given 'termClass' class
 			# and add it to self.terms
 
@@ -237,8 +267,18 @@ class SimpleVocab:
 						row['term'],
 						row['abbreviation'],
 						note,
-						synonyms))
+						synonyms,
+						accID))
 		return
+
+	def __len__ (self):
+		# Purpose: get the number of terms contained in the vocabulary
+		# Returns: integer
+		# Assumes: nothing
+		# Effects: nothing
+		# Throws: nothing
+
+		return len (self.terms)
 
 	def getName (self):
 		# Purpose: accessor method for the vocabulary's name
@@ -277,7 +317,8 @@ class PhenoSlimTerm (Term):
 		term,		# string; the term itself
 		abbreviation,	# string; abbreviation for the term
 		note = None,	# string; note associated with the term
-		synonyms = []	# list of strings; synonyms for the term
+		synonyms = [],	# list of strings; synonyms for the term
+		accID = None	# string; accession ID for the term
 		):
 		# Purpose: constructor
 		# Returns: nothing
@@ -290,7 +331,7 @@ class PhenoSlimTerm (Term):
 		# invoke superclass constructor
 
 		Term.__init__ (self, _Term_key, term, abbreviation, note,
-			synonyms)
+			synonyms, accID)
 
 		# break out the definition and example, if we can
 
@@ -399,6 +440,102 @@ def getPhenoslimTable (
 	output.append ('(%d terms)' % len(terms))
 
 	return output
+
+def getPhenoslimTabDelim (
+	vocab,			# PhenoSlimVocab object
+	headings = [		# four-item list of string column headings
+		'Acc ID',
+		'Phenotype Classification Term',
+		'Definition',
+		'Examples' ],
+	):
+	# Purpose: build and return a list of strings which represent
+	#	a four-column tab-delimited table (accID, term, definition,
+	#	example) of the given 'vocab'
+	# Returns: list of strings
+	# Assumes: nothing
+	# Effects: nothing
+	# Throws: nothing
+	# Notes: lines returned do not end with line-break characters
+
+	template = '%s\t%s\t%s\t%s'
+	output = []
+
+	# add headings, if specified:
+	if headings:
+		output.append (template % tuple(headings))
+		output.append (template % tuple(map (lambda x: '-' * len(x),
+							headings)))
+	# add term info:
+	terms = vocab.getTerms()
+	for term in terms:
+		output.append (template % (term.getAccID(), term.getTerm(),
+			term.getDefinition(), term.getExample()))
+	return output
+
+def getPhenoslimText (
+	vocab,			# PhenoSlimVocab object
+	headings = [		# four-item list of string column headings
+		'Acc ID',
+		'Phenotype Classification Term',
+		'Definition',
+		'Examples' ],
+	spacing = 5		# integer; number of spaces between columns
+	):
+	# Purpose: build and return a list of strings which represent
+	#	a four-column table (accID, term, definition, example) of the
+	#	given 'vocab'; columns are separated with 'spacing'
+	#	space characters
+	# Returns: list of strings
+	# Assumes: nothing
+	# Effects: nothing
+	# Throws: nothing
+	# Notes: lines returned do not end with line-break characters
+
+	# first, we need to collect the data for each row, then determine the
+	# maximum width of each, so that we know how much the smaller values
+	# will need to be padded
+
+	data = []
+	terms = vocab.getTerms()
+	for term in terms:
+		data.append ( (term.getAccID(), term.getTerm(),
+			str(term.getDefinition()), str(term.getExample()) ) )
+	
+	width = []
+	width.append (max (map (lambda term: len(term[0]), data)))
+	width.append (max (map (lambda term: len(term[1]), data)))
+	width.append (max (map (lambda term: len(term[2]), data)))
+
+	if headings:
+		for i in [ 0, 1, 2 ]:
+			width[i] = max (width[i], len(headings[i]))
+
+	# now we construct the output
+
+	spaces = spacing * ' '
+	template = '%%s%s%%s%s%%s%s%%s' % (spaces, spaces, spaces)
+	output = []
+
+	# add headings, if specified:
+	if headings:
+		output.append(template % (string.ljust(headings[0], width[0]),
+					string.ljust(headings[1], width[1]),
+					string.ljust(headings[2], width[2]),
+					headings[3]))
+		lines = map (lambda x: '-' * len(x), headings)
+		output.append(template % (string.ljust(lines[0], width[0]),
+					string.ljust(lines[1], width[1]),
+					string.ljust(lines[2], width[2]),
+					lines[3]))
+	# add term info:
+	for (accID, term, definition, example) in data:
+		output.append (template % (string.ljust (accID, width[0]),
+				string.ljust (term, width[1]),
+				string.ljust (definition, width[2]),
+				example))
+	return output
+
 #
 # Warranty Disclaimer and Copyright Notice
 # 
