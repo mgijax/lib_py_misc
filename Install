@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# Compiles all *.py files and copies both the *.py and the *.pyc files to
+# the directory specified on the command-line.
+#
+# Usage:  Install <directory>
+#
+# Note: Only run from within the directory containing this script.
+
+INSTDIR=$1
+
+if [ $# -ne 1 ]; then
+	echo "Usage: $0 <directory>"
+	exit 1
+fi
+
+if [ ! -d $INSTDIR ]; then
+	echo "$INSTDIR is not a directory"
+	exit 1
+fi
+
+python -c 'import compileall; compileall.compile_dir(".")'
+
+for file in `ls *.py *.pyc`
+do
+	cp $file $INSTDIR
+	chmod ug+w $INSTDIR/$file
+done
