@@ -455,8 +455,8 @@ def send_Mail (
         ):
         # Purpose: produce and send an e-mail message from 'send_from' to
 	#	'send_to' with the given 'subject' and 'message'
-        # Returns: None if sent okay, integer return code from sendmail if
-	# 	some error
+        # Returns: integer; 0 if sent okay, non-zero return code from sendmail
+	#	if some error
         # Assumes: nothing
         # Effects: If 'config' is not None, config.get('SENDMAIL') will
 	#	be invoked to send the mail. If it is None, we default
