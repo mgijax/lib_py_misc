@@ -7,6 +7,7 @@ import types
 import time
 import regex
 import sys
+import tempfile
 from signal import signal, alarm, SIGALRM
 import runCommand
 from types import *
@@ -433,6 +434,88 @@ def joinPaths (*item):
 	for i in item:
 		s = os.path.join (s, i)
 	return s
+
+
+###--- Template string for generating e-mail file, for send_Mail() ---###
+
+MAIL_FILE = '''From: %s
+To: %s
+Subject: %s
+
+%s
+'''
+
+def send_Mail (
+        send_from,      # e-mail address sending the message
+        send_to,        # e-mail address to which to send the message
+        subject,        # e-mail subject line
+        message,        # text of the e-mail message
+	config = None	# dict with key 'SENDMAIL' whose value is full
+			#  pathname of the sendmail executable.
+        ):
+        # Purpose: produce and send an e-mail message from 'send_from' to
+	#	'send_to' with the given 'subject' and 'message'
+        # Returns: None if sent okay, integer return code from sendmail if
+	# 	some error
+        # Assumes: nothing
+        # Effects: If 'config' is not None, config.get('SENDMAIL') will
+	#	be invoked to send the mail. If it is None, we default
+	#	to /usr/lib/sendmail.
+        # Throws: Propogates IOError if an error occurs in sending stuff
+	#	to sendmail.
+
+	# provide a default for sendmail and allow the config file to override
+
+	sendmail = '/usr/lib/sendmail'
+	if (config != None and config.has_key('SENDMAIL')):
+		sendmail = config['SENDMAIL']
+
+	# build a unique temporary filename
+
+	tempfile.template = 'mailfile.'
+	filename = tempfile.mktemp()
+
+	# write the file
+
+	fp = open (filename, 'w')
+	fp.write (MAIL_FILE % (send_from, send_to, subject, message))
+	fp.close()
+
+	# pipe the file into sendmail
+
+	stdout, stderr, code = runCommand.runCommand ('cat %s | %s -t' % \
+		(filename, sendmail))
+
+	# cleanup and exit with the status code
+
+	os.remove (filename)
+	return code
+# end send_Mail ------------------------------------------
+
+def askUserForOneChar (
+	question,		# string; a message posing a question.
+	okAnswers = 'yn'	# string; acceptable single char answers
+        ):
+	# Purpose: Ask user the 'question' and keep asking til
+	#	   we get a single char answer in 'okAnswers'.
+	# Returns: string: the answer or None if EOF
+	# Assumes: nothing
+	# Effects: Uses raw_input, trapping EOFError. Keeps asking til the
+	#	    user gives an "okAnswer'.
+	# Throws : nothing
+
+	ans = ""
+	while (ans == ""):
+		try:
+			ans = raw_input( question + " [%s] " % okAnswers)
+		except EOFError :
+			ans = None
+			break
+
+		if (len(ans) != 1 or ans not in okAnswers):
+			ans = ""
+	return ans
+# end askUserForOneChar() ----------------------------------
 
 # Warranty Disclaimer and Copyright Notice
 #
