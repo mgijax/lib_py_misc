@@ -402,6 +402,7 @@ class Table:
 
 	Keyword Parameters Available to 'netscape' format only.
 
+		blank -- string to output in place of a blank cell
 		border -- the width in pixels of the bevel effect around the
 			table (2)
 		cell_line_breaks -- 1|0  flag to determine if newline char in
@@ -417,6 +418,8 @@ class Table:
 			that heading index. e.g. t.colspan = [2,2] will place 2
 			headings spanning 2 columns each (assuming the body has
 			4 columns).
+		colors -- a list of color codes for netscape to cycle through
+			when displaying rows.  e.g.- [ '#ffffff', '#eeeeee' ]
 		heading_nobreak -- 1|0 flag to determine if spaces in heading
 			should be replaced by '&nbsp;'.  This only applies if
 			the browser is Netscape.  (0)
@@ -444,6 +447,7 @@ class Table:
 		"""
 
 		# Specify the default values
+		self.blank = ''			# string output for blank cell
 		self.body = [['&nbsp;']*3]
 		self.border = 2
 		self.caption_align = 'top'
@@ -456,6 +460,7 @@ class Table:
 		self.cell_valign = 'top'
 		self.cell_line_breaks = 1
 		self.colspan = None
+		self.colors = [ '#ffffff' ]	# white rows only by default
 		self.escape = 0
 		self.filter = 0
 		self.group = 0
@@ -464,6 +469,9 @@ class Table:
 		self.heading_nobreak = 0
 		self.heading_valign = 'top'
 		self.line_spacing = 1
+		self.oneRowColor = 0		# index in self.colors of the
+						# color to use when we only
+						# have one body row
 		self.pad = 1
 		self.sep = ' '
 		self.tabletitle = tabletitle
@@ -501,6 +509,36 @@ class Table:
 			for i in range(len(value)):
 				self.__copy.append(map(self.__str, value[i]))
 
+
+	def fixBlank (self, s):
+		# Purpose: returns 's' if it is non-blank, or a defined
+		#	string (self.blank) to substitute for a blank 's'
+		# Returns: string
+		# Assumes: nothing
+		# Effects: nothing
+		# Throws: nothing
+
+		if s == '':
+			return self.blank
+		return s
+
+	def isNewLogicalRow (self,
+		oldRow,
+		newRow
+		):
+		# Purpose: determine if 'newRow' is a new logical row when
+		#	considering 'oldRow'
+		# Returns: boolean (0/1); 1 if 'newRow' is indeed a new
+		#	logical row
+		# Assumes: nothing
+		# Effects: nothing
+		# Throws: nothing
+		# Notes: A new logical row is one which should get a distinct
+		#	color (if available) from the previous row.  It
+		#	indicates that this row is a different logical object,
+		#	not just a continuation of the previous row.
+
+		return 1		# always consider as a new row
 
 	def __netscape(self):
 		"""Generates an HTML Table object using Netscape-style tags."""
@@ -571,19 +609,47 @@ class Table:
 						+ str(self.heading[i]) +'</TH>'
 				s = s + prefix + middle + postfix
 
-		# construct the rows themselves
+		# find out if there's more than one "logical row" so we know
+		# what to do about swapping colors.  (If there are fewer than
+		# two logical rows, then we start with self.oneRowColor.)
+
+		logical_rows = 0
+		lastRow = []
 		for row in self.body:
-			prefix = '<TR VALIGN=%s> ' % self.cell_valign \
+			if self.isNewLogicalRow (lastRow, row):
+				logical_rows = logical_rows + 1
+				if logical_rows >= 2:
+					break
+			lastRow = row
+
+		# construct the rows themselves
+		num_colors = len(self.colors)
+		if logical_rows <= 1:
+			i = self.oneRowColor - 1
+		else:
+			i = -1
+		lastRow = []
+		for row in self.body:
+			if self.isNewLogicalRow (lastRow, row):
+				i = i + 1
+			color = self.colors[i % num_colors]
+
+			prefix = '<TR VALIGN=%s BGCOLOR="%s"> ' % \
+				(self.cell_valign, color) \
 				+ '<TD Align=%s>' % self.column1_align
 			postfix = '</TD> </TR>\n'
 			infix = '</TD> <TD Align='+self.cell_align+'>'
-			s = s + prefix + string.join(row, infix) + postfix
+			s = s + prefix + \
+				string.join(
+					map (self.fixBlank, row),
+					infix) + \
+				postfix
+			lastRow = row
 
 		#close table
 		s = s + '</TABLE><P>\n'
 
 		return s
-
 
 	def __wrap(self):
 
@@ -1032,6 +1098,52 @@ class Table:
 			return
 
 		return s
+
+class StripedTable (Table):
+	# IS: a Table with rows in alternating colors, by default gray and
+	#	white.
+	# HAS: see Table
+	# DOES: see Table
+
+	def __init__(self, tabletitle='', **kw):
+
+		Table.__init__ (self, tabletitle)
+
+		# update default settings for this type of table
+
+		self.blank = '&nbsp;'
+		self.cell_padding = 3
+		self.cell_spacing = 0
+		self.colors = [ '#dddddd', '#ffffff' ]
+		self.oneRowColor = 1
+
+		# Now overlay the keyword arguments from caller
+		for k in kw.keys():
+			if k == 'body': #Must repr the body
+				self.body = kw['body']
+			elif self.__dict__.has_key(k):
+				self.__dict__[k] = kw[k]
+			else:
+				print `k`, "not a valid parameter for class."
+
+class MultiRowStripedTable (StripedTable):
+	# IS: a StripedTable which handles multiple physical rows per logical
+	#	row.  (A row may be continued into the next row by providing
+	#	blank cells to the left.)
+	# HAS: see Table
+	# DOES: see Table
+
+	def isNewLogicalRow (self,
+		oldRow,
+		newRow
+		):
+		# Overrides Table.isNewLogicalRow() to handle the case of
+		# continued rows.
+
+		if not oldRow:
+			return 1
+		return newRow[0] not in [ '', ' ', '&nbsp;' ]
+
 #
 # Warranty Disclaimer and Copyright Notice
 # 
