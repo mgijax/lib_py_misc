@@ -593,7 +593,7 @@ def readAndParseLine (
 				# line, then we can return.  Otherwise, trim
 				# off the slash.
 
-				if value[-1] != '\\':
+				if value[-1:] != '\\':
 					return name, value, lineCt
 				value = string.rstrip(line[:-1])
 
