@@ -87,6 +87,7 @@ error = 'Configuration.error'		# exception raised by this module
 
 ERR_MISSING = 'Cannot find specified config file'
 ERR_UNRECOGNIZED = 'Unrecognized format in config file'
+ERR_UNKNOWN_KEYS = 'Uknown configuration options: %s'
 
 ###--- Regular Expressions for Parsing Configuration Files ---###
 
@@ -129,7 +130,50 @@ re_cshell2 = regex.compile ('setenv[\t ]+'	# setenv keyword, spacing
 # find one parameter name embedded within another parameter value:
 re_parm = regex.compile ('\${\([^}]+\)}')	# format like ${MYPARM}
 
+###--- Other Global Variables ---###
+
+MEMORY = {}	# maps from (filename, findFile) key to a Configuration
+		# object, so we can remember the object once we build it for
+		# a given configuration file, and just return it rather than
+		# rereading the file and rebuilding the object if we're asked
+		# for it again
+
 ###--- Functions ---###
+
+def get_Configuration (
+	filename,	# string; name of the configuration file to read
+	findFile = 0	# boolean (0/1); should we traverse up the directory
+			# tree to find 'filename'?
+	):
+	# Purpose: This is a wrapper over the constructor for the
+	#	Configuration class.  It uses the global MEMORY to remember
+	#	Configuration objects that we've already constructed, so we
+	#	can return them directly without rebuilding them.
+	# Returns: Configuration object
+	# Assumes: nothing
+	# Effects: if this is the first time we ask for the (filename,
+	#	findFile) combination, then we read and parse that 'filename',
+	#	construct a Configuration object, and remember it in the
+	#	global MEMORY
+	# Throws: propagates all exceptions raised by Configuration.__init__()
+
+	global MEMORY
+
+	# if we've already encountered this request, then simply return the
+	# Configuration object that we constructed last time
+
+	key = (filename, findFile)
+	if MEMORY.has_key (key):
+		print 'finding %s' % str(key)
+		return MEMORY[key]
+
+	# Otherwise, read and parse the file, create the Configuration object,
+	# remember it for next time, and return it
+
+	config = Configuration (filename, findFile)
+	MEMORY[key] = config
+	print 'remembering %s' % str(key)
+	return config
 
 def find_path (
 	s = 'Configuration'	# string pathname for which we're looking
@@ -386,6 +430,30 @@ class Configuration:
 		return self.options.keys()
 
 	###--- Other Data Access Methods ---###
+
+	def check_keys (self,
+		desired_keys	# list of strings; each string is one key that
+				# should be defined in the config file
+		):
+		# Purpose: check that all the 'desired_keys' are, in fact,
+		#	defined
+		# Returns: nothing
+		# Assumes: nothing
+		# Effects: nothing
+		# Throws: error.ERR_UNKNOWN_KEYS if we encounter one or more
+		#	'desired_keys' which are not defined in this object
+		# Notes: This method would often be used by a script to see
+		#	that all its needed config parameters are defined
+		#	before it begins its real work.
+
+		unknown = []
+		for key in desired_keys:
+			if not self.has_key(key):
+				unknown.append (key)
+		if unknown:
+			raise error, ERR_UNKNOWN_KEYS % \
+				string.join (unknown, ', ')
+		return
 
 	def get (self,
 		key		# string; parameter name
