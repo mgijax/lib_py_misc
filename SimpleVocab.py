@@ -391,7 +391,9 @@ def getSelectionList (
 	vocab,				# SimpleVocab object
 	size = 5,			# integer; number of terms to show
 	fieldname = "phenoslim",	# string; name of HTML field
-	url = None			# string; URL for 'browse' link
+	url = None,			# string; URL for 'browse' link
+	andBox = 0,			# boolean; to show a choice box
+					# for allowing an AND/OR/NOT ANY selection
 	):
 	# Purpose: build and return a list of strings for an HTML select box
 	#	build from the given 'vocab'
@@ -404,7 +406,12 @@ def getSelectionList (
 	if url:
 		output.append ('(<I>You can</I> <a href="%s">' % url \
 			+ 'browse the Classification Definitions</a>)<dd>')
-
+	if andBox :
+		output.append ('<SELECT NAME="phenoslimAnd">\r\n'\
+			       '  <OPTION> AND\r\n'\
+			       '  <OPTION>OR\r\n'\
+			       '  <OPTION>NOT ANY\r\n'\
+			       '</SELECT>\r\n')
 	output.append ('<SELECT SIZE=%d MULTIPLE NAME="%s">' % \
 		(size, fieldname))
 	output.append ('<OPTION VALUE="" SELECTED> ANY')
