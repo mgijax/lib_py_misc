@@ -186,8 +186,9 @@ class SimpleVocab:
 				self._Vocab_key,
 
 			'''select vs._Term_key, vs.synonym
-			from VOC_Term vt, VOC_Synonym vs
-			where vt._Term_key = vs._Term_key
+			from VOC_Term vt, MGI_Synonym vs
+			where vt._Term_key = vs._Object_key
+				and vs._MGIType_key = 13
 				and vt._Vocab_key = %s''' % self._Vocab_key,
 
 			'''select vtv._Term_key, vtv.accID
