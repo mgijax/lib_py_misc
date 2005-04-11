@@ -258,7 +258,7 @@ class RcdFile:
 		# Effects: nothing
 		# Throws: nothing
 
-		return self.rcds.has_key (key)
+		return self.rcds.has_key (keyValue)
 
 	def keys (self):
 		# Purpose: get a list of key values for Rcd objects defined
