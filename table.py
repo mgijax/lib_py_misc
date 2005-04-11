@@ -192,6 +192,9 @@ import sys
 import regex
 
 
+error = 'myError'
+MISMATCHING_SUBROW = 'Cannot render table with different subrow sizes'
+
 # Regular Expressions
 # ===================
 
@@ -665,59 +668,162 @@ class Table:
 			s = gsub('<TH', '<TH ALIGN=%s BGCOLOR=%s' % (self.heading_align,
 								     self.heading_color),s)
 
-		# find out if there's more than one "logical row" so we know
-		# what to do about swapping colors.  (If there are fewer than
-		# two logical rows, then we start with self.oneRowColor.)
+		###--- start insertion for MPR ---###
 
+		# convert cells which contained list items (converted to 
+		# strings by __setattr__) back to being lists:
+
+		for r in range(0, len(self.body)):
+			for c in range(0, len(self.body[r])):
+				value = self.body[r][c]
+				if (len(value) > 0) and (value[0] == '[') \
+						and (value[-1] == ']'):
+					self.body[r][c] = eval(value)
+
+		# Analyze self.body to see if there are any rows which
+		# contains one or more cells with a list of items.  If so, all
+		# the lists in a given row must be the same length.  That
+		# length is what we must use for a rowspan for the non-list
+		# cells.
+
+		rowspans = []	# parallel to self.body, giving rowspan
+	    			# needed for rows (non-1 for rows with cells
+				# that contain lists of items)
+
+		for row in self.body:
+		    subrowCount = None
+
+		    for cell in row:
+			if type(cell) == types.ListType:
+			    if subrowCount == None:
+			        subrowCount = len(cell)
+
+			    elif (len(cell) != subrowCount):
+				raise error, MISMATCHING_SUBROW
+
+		    if subrowCount != None:
+		        rowspans.append (subrowCount)
+		    else:
+		        rowspans.append (1)
+
+		# determine if we only have one logical row (this will affect
+		# row coloring)
+
+		lastRow = []
 		logical_rows = 0
-		lastRow = []
-		for row in self.body:
-			if self.isNewLogicalRow (lastRow, row):
-				logical_rows = logical_rows + 1
-				if logical_rows >= 2:
-					break
-			lastRow = row
+		onlyOneRow = 1
 
-		# construct the rows themselves
+		for row in self.body:
+		    if self.isNewLogicalRow (lastRow, row):
+			logical_rows = logical_rows + 1
+			if logical_rows >= 2:	
+				onlyOneRow = 0
+				break
+		    lastRow = row
+
+		# finally, build the rows...
+
+		rowNum = 0
+		lastRow = []
 		num_colors = len(self.colors)
-		if logical_rows <= 1:
-			i = self.oneRowColor - 1
-		else:
-			i = -1
-		lastRow = []
-		for row in self.body:
-			if self.isNewLogicalRow (lastRow, row):
-				i = i + 1
-			color = self.colors[i % num_colors]
 
-			# We now use a new way of generating the table rows.
-			# Doing it this way allows us to adorn the cells for
-			# certain columns with extra attributes in their
-			# <TD> tags, like NOWRAP.  For backward compatability,
-			# we continue to handle cell alignment in the
-			# traditional way.
+		for row in self.body:
+		    rowspan = rowspans[rowNum]
+
+		    if onlyOneRow:
+			color = self.colors[self.oneRowColor]
+		    else:
+			color = self.colors[rowNum % num_colors]
+
+		    if rowspan == 1:		# no sub-rows
+			# do as normal
 
 			list = [ '<TR VALIGN=%s BGCOLOR="%s"> ' % \
-					(self.cell_valign, color) ]
+				(self.cell_valign, color) ]
 
 			cellNum = 0
 			align = self.column1_align
 
 			for cell in row:
-				list.append ('<TD %sAlign=%s>%s</TD> ' %
-					(self.adornments(cellNum),
-					 align,
-					 self.fixBlank(cell) ) )
+			    if type(cell) != types.ListType:
+				value = cell
+			    else:
+				value = cell[0]
 
-				if cellNum == 0:
-					align = self.cell_align
+			    list.append ('<TD %sAlign=%s>%s</TD> ' % \
+				(self.adornments(cellNum),
+				align,
+				self.fixBlank(value) ) )
 
-				cellNum = cellNum + 1 
+			    if cellNum == 0:
+				align = self.cell_align
+
+			    cellNum = cellNum + 1
 
 			list.append ('</TR>\n')
-			s = s + string.join(list,'')
+		    else:
+			# do main row with rowspan, then subrows following
 
-			lastRow = row
+			list = [ '<TR VALIGN=%s BGCOLOR="%s"> ' % \
+				(self.cell_valign, color) ]
+
+			cellNum = 0
+			align = self.column1_align
+
+			for cell in row:
+			    if type(cell) == ListType:
+				if len(cell) > 0:
+				    value = self.fixBlank(cell[0])
+				else:
+				    value = self.fixBlank('')
+
+				list.append ('<TD %sAlign=%s>%s</TD> ' % \
+				    (self.adornments(cellNum),
+				    align,
+				    value) )
+			    else:
+				list.append(
+				    '<TD %sAlign=%s ROWSPAN=%d>%s</TD> ' % \
+					(self.adornments(cellNum),
+					align,
+					rowspan,
+					self.fixBlank(cell) ) )
+
+			    if cellNum == 0:
+				align = self.cell_align
+
+			    cellNum = cellNum + 1
+
+			list.append ('</TR>\n')
+
+			# now do subrows
+
+			subRowNum = 1
+			while subRowNum < rowspan:
+			    list.append ('<TR VALIGN=%s BGCOLOR="%s"> ' % \
+				(self.cell_valign, color) )
+
+			    cellNum = 0
+			    for cell in row:
+			    	if type(cell) == ListType:
+			    	    list.append ('<TD %sAlign=%s>%s</TD>' % \
+				    	(self.adornments(cellNum),
+				    	align,
+				    	self.fixBlank(cell[subRowNum]) ) )
+			    	cellNum = cellNum + 1
+
+			    list.append ('</TR>\n')
+
+		    	    subRowNum = subRowNum + 1
+
+		    list.append ('<!-- end row -->\n')
+		    s = s + string.join (list, '')
+
+		    if self.isNewLogicalRow (lastRow, row):
+			rowNum = rowNum + 1
+		    lastRow = row
+
+		###--- end insertion ---###
 
 		#close table
 		s = s + '</TABLE><P>\n'
