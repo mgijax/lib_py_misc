@@ -1,3 +1,10 @@
+TAG: lib_py_misc-3-2-2-0
+DATE: 06/27/2005
+STAFF: jsb
+RELEASE: beta
+CHANGES:
+1) fixed two bugs in table.py introduced in MP release.
+
 TAG: lib_py_misc-1-0-25
 DATE: 03/30/2004
 STAFF: jsb
