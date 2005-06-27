@@ -678,7 +678,10 @@ class Table:
 				value = self.body[r][c]
 				if (len(value) > 0) and (value[0] == '[') \
 						and (value[-1] == ']'):
+				    try:
 					self.body[r][c] = eval(value)
+				    except:
+					pass	# if fail, leave as-is
 
 		# Analyze self.body to see if there are any rows which
 		# contains one or more cells with a list of items.  If so, all
@@ -723,11 +726,14 @@ class Table:
 
 		# finally, build the rows...
 
-		rowNum = 0
+		rowNum = -1
 		lastRow = []
 		num_colors = len(self.colors)
 
 		for row in self.body:
+		    if self.isNewLogicalRow (lastRow, row):
+			rowNum = rowNum + 1
+
 		    rowspan = rowspans[rowNum]
 
 		    if onlyOneRow:
@@ -819,8 +825,6 @@ class Table:
 		    list.append ('<!-- end row -->\n')
 		    s = s + string.join (list, '')
 
-		    if self.isNewLogicalRow (lastRow, row):
-			rowNum = rowNum + 1
 		    lastRow = row
 
 		###--- end insertion ---###
