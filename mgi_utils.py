@@ -225,7 +225,7 @@ class Tee:
 	#
 	# Example (Writes to sys.stderr and 'junk.log'):
 	#
-	#	#!/usr/local/bin/python
+	#	#!./python
 	#
 	#	from mgi_utils import Tee
 	#
@@ -236,7 +236,7 @@ class Tee:
 	#
 	# Example (Logs sql to sys.stderr and 'junk.log'):
 	#
-	#	#!/usr/local/bin/python
+	#	#!./python
 	#
 	#	
 	#   import db 
