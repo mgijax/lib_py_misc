@@ -1,3 +1,15 @@
+TAG: lib_py_misc-3-4-2-0
+DATE: 01/12/2006
+STAFF: jsb
+CHANGES:
+1) merged tr7193 branch to trunk
+
+TAG: lib_py_misc-tr7193-1
+DATE: 11/09/2005
+STAFF: lec
+CHANGES:
+1) branch point tag for Python 2.4.2 conversion (TR 7193)
+
 TAG: lib_py_misc-tr7193-BP
 DATE: 11/09/2005
 STAFF: lec

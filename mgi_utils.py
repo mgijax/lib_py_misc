@@ -5,6 +5,7 @@ import os
 import string
 import types
 import time
+import ignoreDeprecation
 import regex
 import sys
 import tempfile
@@ -225,7 +226,7 @@ class Tee:
 	#
 	# Example (Writes to sys.stderr and 'junk.log'):
 	#
-	#	#!/usr/local/bin/python
+	#	#!./python
 	#
 	#	from mgi_utils import Tee
 	#
@@ -236,7 +237,7 @@ class Tee:
 	#
 	# Example (Logs sql to sys.stderr and 'junk.log'):
 	#
-	#	#!/usr/local/bin/python
+	#	#!./python
 	#
 	#	
 	#   import db 
@@ -532,5 +533,5 @@ def askUserForOneChar (
 #  is prohibited without the prior express written permission of the Jackson 
 #  Laboratory.
 # 
-# Copyright © 1996, 1999, 2002 by The Jackson Laboratory
+# Copyright (c) 1996, 1999, 2002 by The Jackson Laboratory
 # All Rights Reserved
