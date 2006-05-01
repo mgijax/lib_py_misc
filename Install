@@ -1,48 +1,77 @@
 #!/bin/sh
 #
-# Compiles all *.py files and copies both the *.py and the *.pyc files to
-# the directory specified on the command-line.
+#  Install
+###########################################################################
 #
-# Usage:  Install <directory>
+#  Purpose:  This script compiles all *.py files and copies both the *.py
+#            and the *.pyc files to the given directory.
 #
-# Note: Only run from within the directory containing this script.
+#  Usage:  Install <library_directory>
+#
+#          where
+#
+#              library_directory is the full path of the directory where
+#                                the *.py and *.pyc files are copied.
+#
+###########################################################################
 
-INSTDIR=$1
+cd `dirname $0`
 
-if [ $# -ne 1 ]; then
-	echo "Usage: $0 <directory>"
-	exit 1
+#
+# Source the configuration file.
+#
+. Configuration
+
+#
+# Verify the arguments to the script.
+#
+if [ $# -ne 1 ]
+then
+    echo "Usage: $0 <library_directory>"
+    exit 1
+fi
+LIBRARY_DIRECTORY=$1
+
+#
+# If the library directory does not exist, create it.
+#
+if [ ! -d ${LIBRARY_DIRECTORY} ]
+then
+    mkdir -p ${LIBRARY_DIRECTORY}
+    if [ $? -ne 0 ]
+    then
+        echo "Cannot create directory: ${LIBRARY_DIRECTORY}"
+        exit 1
+    fi
 fi
 
-if [ ! -d $INSTDIR ]; then
-	echo "$INSTDIR is not a directory"
-	exit 1
-fi
-
+#
+# Compile all Python scripts.
+#
 python -c 'import compileall; compileall.compile_dir(".")'
+if [ $? -ne 0 ]
+then
+    echo "Error compiling Python source"
+    exit 1
+fi
 
-for file in `ls *.py *.pyc`
+#
+# Set the proper permissions on the Python files.
+#
+chmod 775 *.py
+chmod 664 *.pyc
+
+#
+# Copy the Python files to the given library directory.
+#
+for FILE in `ls *.py *.pyc`
 do
-	cp $file $INSTDIR
-	chmod ug+w $INSTDIR/$file
+    cp -p ${FILE} ${LIBRARY_DIRECTORY}
+    if [ $? -ne 0 ]
+    then
+        echo "Cannot copy ${FILE} to ${LIBRARY_DIRECTORY}"
+        exit 1
+    fi
 done
-#
-# Warranty Disclaimer and Copyright Notice
-# 
-#  THE JACKSON LABORATORY MAKES NO REPRESENTATION ABOUT THE SUITABILITY OR 
-#  ACCURACY OF THIS SOFTWARE OR DATA FOR ANY PURPOSE, AND MAKES NO WARRANTIES, 
-#  EITHER EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR A 
-#  PARTICULAR PURPOSE OR THAT THE USE OF THIS SOFTWARE OR DATA WILL NOT 
-#  INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS, OR OTHER RIGHTS.  
-#  THE SOFTWARE AND DATA ARE PROVIDED "AS IS".
-# 
-#  This software and data are provided to enhance knowledge and encourage 
-#  progress in the scientific community and are to be used only for research 
-#  and educational purposes.  Any reproduction or use for commercial purpose 
-#  is prohibited without the prior express written permission of the Jackson 
-#  Laboratory.
-# 
-# Copyright © 1996, 1999, 2002 by The Jackson Laboratory
-# All Rights Reserved
-#
 
+exit 0
