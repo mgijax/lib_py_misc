@@ -20,7 +20,7 @@ cd `dirname $0`
 #
 # Source the configuration file.
 #
-. Configuration
+. ./Configuration
 
 #
 # Verify the arguments to the script.
