@@ -478,6 +478,7 @@ class Table:
 		self.heading_nobreak = 0
 		self.heading_valign = 'top'
 		self.line_spacing = 1
+		self.name = None
 		self.oneRowColor = 0		# index in self.colors of the
 						# color to use when we only
 						# have one body row
@@ -604,7 +605,16 @@ class Table:
 		s = s + '<TABLE border=%s ' % self.border \
 			+ 'cellpadding=%s ' % self.cell_padding \
 			+ 'cellspacing=%s ' % self.cell_spacing \
-			+ 'width="%s">\n' % self.width
+			+ 'width="%s"' % self.width
+
+		# The name is not always used, so check for it before
+		# closing the TABLE tag.
+		if self.name:
+			s = s + ' NAME="%s"' % self.name
+
+		# Close the TABLE tag.
+		s = s + '>\n'
+
 		if self.tabletitle:
 			s = s + '<CAPTION align=%s>' % self.caption_align \
 				+ '<STRONG>%s</STRONG>' % self.tabletitle \
