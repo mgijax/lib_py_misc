@@ -1,3 +1,4 @@
+#!/usr/local/bin/python
 """
  fjoin.py is the reference implementation of the feature join 
  algorithm described in the paper:
@@ -108,6 +109,7 @@
 	2. Provide an option to sort internally, if the user
 	doesn't have GNU sort.
 	3. Move comments into doc strings.
+    1.2.1 July 2007	Allow user to specify path to GNU sort explicitly.
 """
 
 #------------------------------------------------------------
@@ -237,11 +239,6 @@ class FJoin:
 	    help="Sort the input(s). Specify 1, 2, or both. " + \
 	    "(Default: no sorting done.)")
 
-	self.parser.add_option("--sortInternal", 
-	    action="store_true", dest="sortInternal", default=False,
-	    help="Forces any sorting to be done internally. " + \
-	    "(Default: uses GNU sort, if available)")
-
 	self.parser.add_option("-o", metavar="FILE",
 	    action="store", dest="ofile", default="-",
 	    help="Output file. (Default: standard out)")
@@ -290,6 +287,19 @@ class FJoin:
 	    help="The character or string signifying a comment line in input 2. " + \
 	    "(Default: the HASH character, '#')")
 	    
+	self.parser.add_option("--gnuSort", metavar="PATH",
+	    action="store", dest="gnuSort", default=None,
+	    help="Path to GNU sort utility. If given, will use it to " + \
+		"sort the inputs. You can also set the environment variable " + \
+		"GNUSORT instead. --gnuSort on the command line overrides " + \
+		"the GNUSORT environment variable. If neither GNUSORT or " + \
+		"--gnuSort is specified, sorting is done internally.")
+	    
+	self.parser.add_option("--sortInternal", 
+	    action="store_true", dest="sortInternal", default=False,
+	    help="Forces sorting to be done internally, regardless of " + \
+	    "GNUSORT or --gnuSort settings. ")
+
     #-------------------------------------
     def validate(self):
 	"""Checks that args are valid, opens files, and generally gets set up.
@@ -315,12 +325,19 @@ class FJoin:
 	if self.options.sort not in [None,"1","2","both"]:
 	    self.parser.error("-s argument must be '1', '2', or 'both'.")
 
+	if self.options.gnuSort is None:
+	    if os.environ.has_key("GNUSORT"):
+		self.options.gnuSort = os.environ["GNUSORT"]
+	    else:
+		self.options.sortInternal = True
+
 	sort1 = self.options.sort in ["1","both"]
 	if sort1:
 	    if self.options.sortInternal:
 		sort1 = "internal"
 		self.log("Internally sorting input: %s\n"%self.options.file1)
 	    else:
+		sort1 = self.options.gnuSort
 		self.log("Sorting input: %s\n" % self.options.file1)
 
 	sort2 = self.options.sort in ["2","both"]
@@ -329,6 +346,7 @@ class FJoin:
 		sort2 = "internal"
 		self.log("Internally sorting input: %s\n"% self.options.file2)
 	    else:
+		sort2 = self.options.gnuSort
 		self.log("Sorting input: %s\n" % self.options.file2 )
 
 
@@ -590,6 +608,7 @@ class FJoin:
 	"""
 	self.xStream.close()
 	self.yStream.close()
+	self.ofd.close()
 
 
 #------------------------------------------------------------
@@ -668,17 +687,9 @@ class FJoinStream:
 	    self.sortInternal = True
 	    return
 
-	p = os.popen('sort --version')
-	response = p.read()
-	p.close()
-	if "not found" in response or "GNU" not in response:
-	    self.sortInternal = True
-	    self.logger.log(
-	      "Did not find GNU sort; attempting internal sort for file: %s.\n"%self.fname)
-	else:
-	    istart = self.columnMap['start']
-	    self.sortCommand = "sort -k%dn -t \"%s\" " % (istart+1,self.separator[0])
-	    self.logger.log("SORT CMD: " + self.sortCommand + NL)
+	istart = self.columnMap['start']
+	self.sortCommand = self.sortIt +" -k%dn -t \"%s\" " % (istart+1,self.separator[0])
+	self.logger.log("SORT CMD: " + self.sortCommand + NL)
 
 	
     #-------------------------------------
