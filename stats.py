@@ -959,7 +959,7 @@ def recordMeasurement (
 	# Notes: Either 'intValue' or 'floatValue' should be non-null, but not
 	#	both.
 
-	if intValue:
+	if intValue != None:
 		sql ('exec MGI_recordMeasurement "%s", %d' % (
 			abbrev, intValue))
 	else:
