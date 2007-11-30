@@ -1,3 +1,9 @@
+TAG: lib_py_misc-3-5-4-2
+DATE: 11/30/2007
+STAFF: jsb
+CHANGES: 
+1) added stats.py library for dealing with new statistic tables
+
 TAG: lib_py_misc-tr8087-BP
 DATE: 8/30/2007
 STAFF: pf
