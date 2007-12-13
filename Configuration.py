@@ -64,7 +64,8 @@
 #	directory tree to find your specified configuration file.  You must
 #	supply to correct path yourself.
 
-import os	# standard Python libraries
+import ignoreDeprecation
+import os
 import sys
 import types
 import regex
@@ -200,18 +201,27 @@ def find_path (
 	# called in argv[0]
 
 	script_path, script_name = os.path.split (sys.argv[0])
+#        sys.stderr.write("sys.argv[0] ->")
+#        sys.stderr.write(sys.argv[0] + "\n")
+#        sys.stderr.write("\nScriptPath & ScriptName ->")
+#        sys.stderr.write(script_path + " -- " + script_name + "\n")
 
 	# if the 'script_path' is empty, that means that the 'script_name'
 	# was found using the user's PATH environment variable.  So, we need
 	# to track down where it was found.
+#        sys.stderr.write("--------------------------------------\n")
 
 	if not script_path:
 		PATH = string.split (os.environ['PATH'], ':')
 		for dir in PATH:
+#                        sys.stderr.write("\nLooking in ->")
+#                        sys.stderr.write(dir)
 			if os.path.exists (os.path.join (dir, script_name)):
 				script_path = dir
 				break
 		else:
+#                        sys.stderr.write("Not found")
+#                        sys.stderr.write(os.environ['PATH'] + "\n")
 			raise error, 'Cannot find %s in your PATH' % \
 				script_name
 
@@ -254,7 +264,10 @@ def find_path (
 	i = len(pieces) - 1
 	while i >= 0:
 		path = os.sep + string.join (pieces[:i] + filename, os.sep)
+#                sys.stderr.write("--------------------------------------\n")
+#                sys.stderr.write(path + "\n")
 		if os.path.exists (path):
+#                        sys.stderr.write("Found in -> " + path + "\n")
 			return path
 		i = i - 1
 	return None
@@ -350,6 +363,24 @@ class Configuration:
 			for libdir in libdirs:
 				if libdir not in sys.path:
 					sys.path.insert (0, libdir)
+
+                # if the provided config file uses a global config to define
+                # shared knowledge, open the file and read in the parms,
+                # giving precedence to the parms found in original config 
+
+                if self.options.has_key ('GLOBAL_CONFIG') and os.path.exists (self['GLOBAL_CONFIG']):
+                    globalConfig = get_Configuration(self['GLOBAL_CONFIG'])
+                    for key in globalConfig.keys():
+                        if not self.options.has_key(key):
+                            self.options[key] = globalConfig[key]
+
+#                sys.stderr.write("--------------------------------------\n")
+#                for key in self.options.keys():
+#                    sys.stderr.write("Config Key ->")
+#                    sys.stderr.write(key + "\n")
+#                    sys.stderr.write("Config Value ->")
+#                    sys.stderr.write(self.options[key] + "\n")
+
 		return
 
 	###--- Dictionary-Compatible Methods ---###
