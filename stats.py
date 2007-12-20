@@ -242,7 +242,7 @@ class Statistic:
 		# Effects: nothing
 		# Throws: nothing
 
-		return self.name
+		return processMeasurementMarkup(self.name)
 
 	#---------------------------------------------------------------------
 
@@ -1009,3 +1009,128 @@ def measureAllHavingSql ():
 		raise ERROR, 'Failed to add measurements for statistics: %s' \
 			% ', '.join (failedAbbrev)
 	return
+
+#-----------------------------------------------------------------------------
+
+def commaDelimit (
+	s	# string; contains an integer or float, represented as string
+	):
+	# Purpose: take the integer or float value represented in string 's',
+	#	and add commas to separate every 3 place values of the whole
+	#	number portion
+	# Returns: string; see Purpose
+	# Assumes: nothing
+	# Effects: nothing
+	# Throws: global 'ERROR' if there are problems identifying the number
+	#	represented by 's'
+
+	# check that we have a valid input
+
+	try:
+		checkFloat = float(s)
+	except ValueError:
+		raise ERROR, 'Cannot add commas to non-numeric: %s' % s
+
+	# break the input into the fractional piece and the whole number piece
+
+	decimalPos = s.find ('.')
+	if decimalPos != -1:
+		fraction = s[decimalPos:]
+		whole = s[:decimalPos]
+	else:
+		fraction = ''
+		whole = s
+
+	# handle the case where the number begins with the decimal point
+
+	if not whole:
+		whole = '0'
+
+	# break the whole number portion into 3-digit chunks
+
+	parts = []
+	while whole:
+		parts.insert (0, whole[-3:])
+		whole = whole[:-3]
+
+	# re-assemble and return
+
+	return ','.join(parts) + fraction
+
+#-----------------------------------------------------------------------------
+
+def processMeasurementMarkup (
+	s,		    # string which may contain \Measurement() markup
+	format = '%0.3f'    # format specifier for float-valued measurement
+	):
+	# Purpose: to convert any \Measurement() tags in 's' to the most
+	#	recent value for their specified statistic abbreviations.
+	# Returns: string, like 's' but with substitutions as needed
+	# Assumes: tag format will be \Measurement(abbrev)
+	# Effects: queries the database to get the latest measurement
+	# Throws: global 'ERROR' if there are problems finding a measurement
+	#	for an abbreviation
+	# Notes: The 'format' parameter is used to convert any float-valued
+	#	measurements to strings; then appropriate commas are added
+	#	for integer place value separators.
+	
+	startTag = '\\Measurement('	# how does the markup start?
+	tagLen = len(startTag)		# length of string we'll search for
+
+	pos = s.find(startTag)
+
+	if pos == -1:			# no markup -- return as-is
+		return s
+
+	t = ''		# string we're building; new version of 's'
+	lastPos = 0	# last position in 's' that we processed
+	lens = len(s)	# length of input string
+
+	# continue for all markups in 's'
+
+	while pos != -1:
+		# in order to handle parentheses in the statistic abbreviation
+		# we need to start counting parentheses after the start tag we
+		# found.  Once we hit the end of the string or a matching
+		# close parenthesis, then we're done.
+
+		y = pos + tagLen
+		pCount = 1
+		while (pCount > 0) and (y < lens):
+			ch = s[y]
+			if ch == ')':
+				pCount = pCount - 1
+			elif ch == '(':
+				pCount = pCount + 1
+			y = y + 1
+
+		if pCount == 0:
+			end = y - 1		# end of this markup
+		else:
+			# mismatched parentheses; return as-is
+			return s
+
+		abbrev = s[pos + tagLen:end]	# stat abbreviation
+		stat = Statistic(abbrev)	# the Statistic itself
+
+		measurement = stat.getLatestMeasurement()
+		if measurement.hasIntValue():
+			mValue = str(measurement.getIntValue())
+		else:
+			mValue = format % measurement.getFloatValue()
+
+		# add any unprocessed characters before the markup, then the
+		# value of the statistic to replace the markup
+
+		t = t + s[lastPos:pos]
+		t = t + commaDelimit (mValue)
+
+		# and, go back to look for more markups
+
+		lastPos = end + 1
+		pos = s.find (startTag, end + 1)
+
+	# add any unprocessed characters after the last markup
+	t = t + s[lastPos:]
+
+	return t
