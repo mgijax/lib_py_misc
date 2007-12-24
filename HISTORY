@@ -1,13 +1,18 @@
+TAG: lib_py_misc-4-0-0-1
+DATE: 12/24/07
+STAFF: pf
+CHANGES: merge of tr8087 branch to trunk
+
+TAG: lib_py_misc-tr8087-x (BP,1->6)
+DATE: 8/30/2007 -> 12/20/07
+STAFF: pf
+CHANGES: MGI 4.0 branch point and dev build tags
+
 TAG: lib_py_misc-3-5-4-2
 DATE: 11/30/2007
 STAFF: jsb
 CHANGES: 
 1) added stats.py library for dealing with new statistic tables
-
-TAG: lib_py_misc-tr8087-x (BP, 1,2,3,4,5,6)
-DATE: 8/30/2007 -> 12/13/07
-STAFF: pf
-CHANGES: MGI 4.0 branch point and dev build tags
 
 TAG: lib_py_misc-3-5-4-1
 DATE: 7/19/2007
