@@ -201,27 +201,18 @@ def find_path (
 	# called in argv[0]
 
 	script_path, script_name = os.path.split (sys.argv[0])
-#        sys.stderr.write("sys.argv[0] ->")
-#        sys.stderr.write(sys.argv[0] + "\n")
-#        sys.stderr.write("\nScriptPath & ScriptName ->")
-#        sys.stderr.write(script_path + " -- " + script_name + "\n")
 
 	# if the 'script_path' is empty, that means that the 'script_name'
 	# was found using the user's PATH environment variable.  So, we need
 	# to track down where it was found.
-#        sys.stderr.write("--------------------------------------\n")
 
 	if not script_path:
 		PATH = string.split (os.environ['PATH'], ':')
 		for dir in PATH:
-#                        sys.stderr.write("\nLooking in ->")
-#                        sys.stderr.write(dir)
 			if os.path.exists (os.path.join (dir, script_name)):
 				script_path = dir
 				break
 		else:
-#                        sys.stderr.write("Not found")
-#                        sys.stderr.write(os.environ['PATH'] + "\n")
 			raise error, 'Cannot find %s in your PATH' % \
 				script_name
 
@@ -264,10 +255,7 @@ def find_path (
 	i = len(pieces) - 1
 	while i >= 0:
 		path = os.sep + string.join (pieces[:i] + filename, os.sep)
-#                sys.stderr.write("--------------------------------------\n")
-#                sys.stderr.write(path + "\n")
 		if os.path.exists (path):
-#                        sys.stderr.write("Found in -> " + path + "\n")
 			return path
 		i = i - 1
 	return None
@@ -373,13 +361,6 @@ class Configuration:
                     for key in globalConfig.keys():
                         if not self.options.has_key(key):
                             self.options[key] = globalConfig[key]
-
-#                sys.stderr.write("--------------------------------------\n")
-#                for key in self.options.keys():
-#                    sys.stderr.write("Config Key ->")
-#                    sys.stderr.write(key + "\n")
-#                    sys.stderr.write("Config Value ->")
-#                    sys.stderr.write(self.options[key] + "\n")
 
 		return
 
