@@ -358,10 +358,7 @@ class Configuration:
 
                 if self.options.has_key ('GLOBAL_CONFIG') and os.path.exists (self['GLOBAL_CONFIG']):
                     globalConfig = get_Configuration(self['GLOBAL_CONFIG'])
-                    for key in globalConfig.keys():
-                        if not self.options.has_key(key):
-                            self.options[key] = globalConfig[key]
-
+                    self.merge(globalConfig)
 		return
 
 	###--- Dictionary-Compatible Methods ---###
@@ -440,6 +437,46 @@ class Configuration:
 		return self.options.keys()
 
 	###--- Other Data Access Methods ---###
+
+	def getUnresolvedValue(self, key):
+		# Purpose: Get a single value, but dont validate its inned variables.
+		# Returns: a single unresolved value from the dictionary.
+		# Assumes: nothing
+		# Effects: nothing
+		# Throws: nothing
+		# Notes: This method does not resolve any parameter names
+		#	which are embedded within other parameter values.
+		#	See self.__getitem__() for that functionality.
+		return self.options[key]
+
+
+	def getUnresolvedMapping(self):
+		# Purpose: Return the internal dictionary
+		# Returns: self.options
+		# Assumes: nothing
+		# Effects: nothing
+		# Throws: nothing
+		# Notes: none
+		
+		return self.options
+
+
+	def getResolvedMapping(self):
+		# Purpose: Return the internal dictionary
+		# Returns: self.options
+		# Assumes: nothing
+		# Effects: nothing
+		# Throws: nothing
+		# Notes: none
+		
+		temp = {}
+		
+		for key in self.keys():
+			temp[key] = self.resolve(key)
+		
+		return temp
+
+
 
 	def check_keys (self,
 		desired_keys	# list of strings; each string is one key that
@@ -561,6 +598,19 @@ class Configuration:
 			file.write ('%s\n' % line)
 		return
 
+	###--- Convienance Methods ---###
+	def merge(self, config):
+		# Purpose: Merge to configuration files together, giving preference to values
+		#	   stored in the current object.
+		# Returns: nothing
+		# Assumes: nothing
+		# Effects: Adds all of the values that are not in the present object, into the present object.
+		# Throws:
+		
+		for key in config.keys():
+			if not self.has_key(key):
+                		self[key] = config.getUnresolvedValue(key)
+
 	###--- Private Methods ---###
 
 	def rawItems (self):
@@ -574,8 +624,8 @@ class Configuration:
 		#	which are embedded within other parameter values.
 		#	See self.items() for that functionality.
 
-		return self.options.items()
-
+		return self.options.items()	
+	
 	def resolve (self,
 		key,		# string; parameter name
 		steps = 100	# integer; maximum recursive levels allowed
