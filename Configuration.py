@@ -64,7 +64,8 @@
 #	directory tree to find your specified configuration file.  You must
 #	supply to correct path yourself.
 
-import os	# standard Python libraries
+import ignoreDeprecation
+import os
 import sys
 import types
 import regex
@@ -200,27 +201,18 @@ def find_path (
 	# called in argv[0]
 
 	script_path, script_name = os.path.split (sys.argv[0])
-#        sys.stderr.write("sys.argv[0] ->")
-#        sys.stderr.write(sys.argv[0] + "\n")
-#        sys.stderr.write("\nScriptPath & ScriptName ->")
-#        sys.stderr.write(script_path + " -- " + script_name + "\n")
 
 	# if the 'script_path' is empty, that means that the 'script_name'
 	# was found using the user's PATH environment variable.  So, we need
 	# to track down where it was found.
-#        sys.stderr.write("--------------------------------------\n")
 
 	if not script_path:
 		PATH = string.split (os.environ['PATH'], ':')
 		for dir in PATH:
-#                        sys.stderr.write("\nLooking in ->")
-#                        sys.stderr.write(dir)
 			if os.path.exists (os.path.join (dir, script_name)):
 				script_path = dir
 				break
 		else:
-#                        sys.stderr.write("Not found")
-#                        sys.stderr.write(os.environ['PATH'] + "\n")
 			raise error, 'Cannot find %s in your PATH' % \
 				script_name
 
@@ -263,10 +255,7 @@ def find_path (
 	i = len(pieces) - 1
 	while i >= 0:
 		path = os.sep + string.join (pieces[:i] + filename, os.sep)
-#                sys.stderr.write("--------------------------------------\n")
-#                sys.stderr.write(path + "\n")
 		if os.path.exists (path):
-#                        sys.stderr.write("Found in -> " + path + "\n")
 			return path
 		i = i - 1
 	return None
@@ -369,17 +358,7 @@ class Configuration:
 
                 if self.options.has_key ('GLOBAL_CONFIG') and os.path.exists (self['GLOBAL_CONFIG']):
                     globalConfig = get_Configuration(self['GLOBAL_CONFIG'])
-                    for key in globalConfig.keys():
-                        if not self.options.has_key(key):
-                            self.options[key] = globalConfig[key]
-
-#                sys.stderr.write("--------------------------------------\n")
-#                for key in self.options.keys():
-#                    sys.stderr.write("Config Key ->")
-#                    sys.stderr.write(key + "\n")
-#                    sys.stderr.write("Config Value ->")
-#                    sys.stderr.write(self.options[key] + "\n")
-
+                    self.merge(globalConfig)
 		return
 
 	###--- Dictionary-Compatible Methods ---###
@@ -458,6 +437,46 @@ class Configuration:
 		return self.options.keys()
 
 	###--- Other Data Access Methods ---###
+
+	def getUnresolvedValue(self, key):
+		# Purpose: Get a single value, but dont validate its inned variables.
+		# Returns: a single unresolved value from the dictionary.
+		# Assumes: nothing
+		# Effects: nothing
+		# Throws: nothing
+		# Notes: This method does not resolve any parameter names
+		#	which are embedded within other parameter values.
+		#	See self.__getitem__() for that functionality.
+		return self.options[key]
+
+
+	def getUnresolvedMapping(self):
+		# Purpose: Return the internal dictionary
+		# Returns: self.options
+		# Assumes: nothing
+		# Effects: nothing
+		# Throws: nothing
+		# Notes: none
+		
+		return self.options
+
+
+	def getResolvedMapping(self):
+		# Purpose: Return the internal dictionary
+		# Returns: self.options
+		# Assumes: nothing
+		# Effects: nothing
+		# Throws: nothing
+		# Notes: none
+		
+		temp = {}
+		
+		for key in self.keys():
+			temp[key] = self.resolve(key)
+		
+		return temp
+
+
 
 	def check_keys (self,
 		desired_keys	# list of strings; each string is one key that
@@ -579,6 +598,19 @@ class Configuration:
 			file.write ('%s\n' % line)
 		return
 
+	###--- Convienance Methods ---###
+	def merge(self, config):
+		# Purpose: Merge to configuration files together, giving preference to values
+		#	   stored in the current object.
+		# Returns: nothing
+		# Assumes: nothing
+		# Effects: Adds all of the values that are not in the present object, into the present object.
+		# Throws:
+		
+		for key in config.keys():
+			if not self.has_key(key):
+                		self[key] = config.getUnresolvedValue(key)
+
 	###--- Private Methods ---###
 
 	def rawItems (self):
@@ -592,8 +624,8 @@ class Configuration:
 		#	which are embedded within other parameter values.
 		#	See self.items() for that functionality.
 
-		return self.options.items()
-
+		return self.options.items()	
+	
 	def resolve (self,
 		key,		# string; parameter name
 		steps = 100	# integer; maximum recursive levels allowed
