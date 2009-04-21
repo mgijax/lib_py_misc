@@ -53,7 +53,7 @@ A Simple Example:
 
 Attributes can also be set at instantiation time (and changed later, if
 desired).
-
+ 
 Example:
 
 	#This example is equivalent to the one above.
@@ -798,12 +798,14 @@ class Table:
 				    align,
 				    value) )
 			    else:
-				list.append(
-				    '<TD %sAlign=%s ROWSPAN=%d>%s</TD> ' % \
-					(self.adornments(cellNum),
-					align,
-					rowspan,
-					self.fixBlank(cell) ) )
+					if rowspan == 0:
+						rowspan = 1
+					list.append(
+						'<TD %sAlign=%s ROWSPAN=%d>%s</TD> ' % \
+						(self.adornments(cellNum),
+						align,
+						rowspan,
+						self.fixBlank(cell) ) )
 
 			    if cellNum == 0:
 				align = self.cell_align
