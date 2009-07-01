@@ -642,7 +642,7 @@ class StatisticGroup:
 
 			sql ('''DELETE FROM MGI_SetMember
 				WHERE _SetMember_key IN (%s)''' % 
-					',',join (map (str, subset)))
+					','.join (map (str, subset)))
 
 		# find highest _SetMember_key stored so far (insertions will
 		# need to go up from this)
