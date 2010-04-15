@@ -963,7 +963,7 @@ class TextFileTableDataSet (TableDataSet):
 	multiValued = {},	# dict mapping fieldnames to delim string
 				#   for all multiValued fields
 				# Assumes the delim string is not empty.
-	numheaderlines=1,	# number of header lines at top of file to skip
+	numheaderlines=0,	# number of header lines at top of file to skip
 				#   if fieldnames==None, assume the last
 				#   header line has column names
 	fieldDelim='\t',	# the field delimiter in the input file
