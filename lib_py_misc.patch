@@ -285,16 +285,3 @@ index 8f8a0bf..78ab384 100644
  
  	return t + s[last:]
  #
-diff --git a/Install b/Install
-index 5cf9ff5..de4a4d7 100755
---- a/Install
-+++ b/Install
-@@ -20,7 +20,7 @@ cd `dirname $0`
- #
- # Source the configuration file.
- #
--. ./Configuration
-+#. ./Configuration
- 
- #
- # Verify the arguments to the script.
