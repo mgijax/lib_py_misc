@@ -126,6 +126,69 @@ index 8022334..0e8cfd3 100644
  		return s
  
  ###--- Main Program ---###
+diff --git a/Profiler.py b/Profiler.py
+index 47ad579..1dcda51 100755
+--- a/Profiler.py
++++ b/Profiler.py
+@@ -11,7 +11,7 @@
+ #	output from the Profiler.
+ 
+ import copy
+-import regsub
++import re
+ import sys
+ import time
+ import string
+@@ -162,7 +162,7 @@ class Profiler:
+ 			'message'
+ 			)
+ 		fp.write(line)
+-		fp.write(regsub.gsub ('[^ \n]', '-', line))
++		fp.write(re.sub ('[^ \\n]', '-', line))
+ 		return
+ 
+ 	def __printEntry (self,
+diff --git a/glimpselib.py b/glimpselib.py
+index 991e6f1..239c347 100644
+--- a/glimpselib.py
++++ b/glimpselib.py
+@@ -11,7 +11,7 @@
+ 
+ import os
+ import string
+-import regsub
++import re
+ 
+ SP = ' '
+ indexerror = 'indexerror'		# exception raised if problem occurs
+@@ -33,7 +33,7 @@ def quote(s):
+ 	"""
+ 
+ 	# Strip all quotes first, then quote the whole search string.
+-	s = regsub.gsub('[\'\"]', '', s)
++	s = re.sub('[\'"]', '', s)
+ 	return '\'' + s + '\''
+ 
+ 
+@@ -41,12 +41,12 @@ def wais_to_glimpse(query):
+ 	"""Converts wais query to glimpse query."""
+ 
+ 	query = string.lower(query)
+-	query = regsub.gsub(' and ', ';', query)
+-	query = regsub.gsub(' or ', ',', query)
+-	query = regsub.gsub(' not ', '!', query)
+-	query = regsub.gsub('*', '#', query)
+-	query = regsub.gsub('(', '{', query)
+-	query = regsub.gsub(')', '}', query)
++	query = re.sub(' and ', ';', query)
++	query = re.sub(' or ', ',', query)
++	query = re.sub(' not ', '!', query)
++	query = re.sub('*', '#', query)
++	query = re.sub('\\(', '{', query)
++	query = re.sub('\\)', '}', query)
+ 	return query
+ 
+ 
 diff --git a/mgi_utils.py b/mgi_utils.py
 index 757036c..fda626d 100644
 --- a/mgi_utils.py
@@ -285,3 +348,192 @@ index 8f8a0bf..78ab384 100644
  
  	return t + s[last:]
  #
+diff --git a/table.py b/table.py
+index 7210cf2..e20f4e2 100644
+--- a/table.py
++++ b/table.py
+@@ -185,11 +185,10 @@ __author__ = 'Glenn T. Colby   gtc@informatics.jax.org'
+ 
+ import types
+ import cgi
+-import regsub
++import re
+ import string
+ import os
+ import sys
+-import regex
+ 
+ 
+ error = 'myError'
+@@ -198,7 +197,7 @@ MISMATCHING_SUBROW = 'Cannot render table with different subrow sizes'
+ # Regular Expressions
+ # ===================
+ 
+-tag_pattern = regex.compile( '<[^>]*>' )
++tag_pattern = re.compile( '<[^>]*>' )
+ 
+ 
+ # Functions
+@@ -208,7 +207,7 @@ def browser_is_netscape():
+ 	"""Returns non-zero if browser is Netscape."""
+ 
+ 	if os.environ.has_key('HTTP_USER_AGENT'):
+-		return regex.match('Mozilla', os.environ['HTTP_USER_AGENT']) + 1
++		return re.match('Mozilla', os.environ['HTTP_USER_AGENT']) + 1
+ 	else:
+ 		return 0
+ 
+@@ -221,24 +220,6 @@ def filter_html( s ):
+ 	return gsub( '<[^>]*>', '', s )
+ 
+ 
+-def filter_text( s ):
+-	"""Recursive function that strips text from a string, leaving HTML tags.
+-
+-	This is the opposite of filter_html.
+-
+-	This might be useful if you are trying to do word-wrapping with
+-	preformatted text that contains markup.
+-	"""
+-
+-	tag_start =  tag_pattern.search( s )
+-	if tag_start != -1:
+-		s = s[tag_start:]
+-		tag_length = tag_pattern.match( s )
+-		return s[:tag_length] + filter_text( s[tag_length:] )
+-	else:
+-		return ''
+-
+-
+ def escape( s ):
+ 	"""Replace special characters '&', '<' and '>' by SGML entities."""
+ 
+@@ -278,49 +259,6 @@ def filter_index( i, s ):
+ 	return len(filter_html(s[:i]))
+ 
+ 
+-def HTML_index( index, s ):
+-	"""Returns the `real' index of a char that has a given filter_index.
+-
+-	This could be done much more efficiently...
+-
+-	Used by __wrap() method.
+-	"""
+-
+-	l = []
+-	for i in range(len(s)):
+-		l.append( s[:i] )
+-	l = map( filter_html, l )
+-	l = map( len, l )
+-	for i in range(len(l)-1, 0, -1):
+-		if index == l[i]:
+-			break
+-	return i
+-
+-
+-def hsplit( s, width ):
+-	"""Inserts newlines at appropriate places for preformatted text.
+-
+-	Used by __wrap method.
+-	"""
+-
+-	f = filter_html(s)
+-	if width >= len(f):
+-		return s
+-	i = width
+-	if ' ' in f[:i]:
+-		while i:
+-			if f[i-1] == ' ':
+-				break
+-			i = i - 1
+-	first_line = s[:HTML_index(i,s)] \
+-		+ filter_text(s[HTML_index(i,s):])
+-	second_line = hsplit(
+-		filter_text(s[:HTML_index(i,s)]) + s[HTML_index(i,s):],
+-		width
+-		)
+-	return first_line + '\n' + second_line
+-
+-
+ def lsort(list, field, html, func = cmp):
+ 	"""Sorts a list by a field using optional comparison function.
+ 
+@@ -361,7 +299,7 @@ center = string.center
+ rjust = string.rjust
+ join = string.joinfields
+ strip = string.strip
+-gsub = regsub.gsub
++gsub = re.sub
+ StringType = type('s')
+ ListType = type([])
+ TupleType = type((0,1))
+@@ -624,7 +562,7 @@ class Table:
+ 			# process cell contents to insert breaks for \n
+ 			for i in range(len(self.body)):
+ 				for j in range(len(self.body[i])):
+-					self.body[i][j] = gsub('\n', '<br>',
++					self.body[i][j] = gsub('\\n', '<br>',
+ 						strip(self.body[i][j]))
+ 
+ 		# Convert spaces in heading to &nbsp; (Netscape only).
+@@ -846,20 +784,6 @@ class Table:
+ 
+ 		return s
+ 
+-	def __wrap(self):
+-
+-		if type(self.cell_width) == IntType:
+-			widths = []
+-			for i in range(len(self.body[0])):
+-				widths.append(self.cell_width)
+-			self.cell_width = widths
+-
+-		for i in range(len(self.body)):
+-			for j in range(len(self.body[i])):
+-				if self.cell_width[j]:
+-					self.body[i][j]=hsplit(self.body[i][j],
+-						self.cell_width[j])
+-
+ 
+ 	def __text(self, pre=0):
+ 		"""Generates a Table in text format.
+@@ -905,15 +829,9 @@ class Table:
+ 				# determine that we really need to:
+ 
+ 				if string.find (self.body[i][j], '\n') != -1:
+-					self.body[i][j] = gsub('\n', ' ',	
++					self.body[i][j] = gsub('\\n', ' ',	
+ 						self.body[i][j])
+ 
+-		#Fix column widths if necessary.
+-		#This is commented out because it is too slow.  It ends up
+-		#making an *additional* copy of the entire table.
+-		#if self.cell_width:
+-		#	self.__wrap()
+-
+ 		# Build list of column widths iff padding cells with spaces.
+ 		if self.pad:
+ 			self.__widths = [0]*len(self.body[0])
+@@ -1070,22 +988,6 @@ class Table:
+ 				else:
+ 					break
+ 
+-
+-	def read(self, file=sys.stdin):
+-		"""Reads a table from a file.
+-
+-		Not implemented yet.  (Duh...)  This method will probably open
+-		a file that contains tab-delimited text and build self.body.
+-		Seems useful.
+-
+-		Perhaps some regex support as well?
+-
+-		Maybe pass a function as an argument that will process a string
+-		and return a list?
+-		"""
+-		pass
+-
+-
+ 	def reverse(self):
+ 		"""Reverses the rows of the table."""
+ 		self.__copy.reverse()
