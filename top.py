@@ -241,7 +241,7 @@ def displayMemory(ram):
 	# convert the memory amount (as a float) to be a string that is
 	# convenient for human consumption (like 1.34G for 1.34 gigabytes)
 
-	suffix = 'B'
+	suffix = 'b'
 	divisor = 1
 
 	if ram >= TB:
@@ -259,7 +259,7 @@ def displayMemory(ram):
 	else:
 		return str(round(ram))
 
-	amount = ram * 1.0 / divisor
+	amount = (ram * 1.0) / divisor
 	return '%0.3f%s' % (amount, suffix)
 
 def displayProcessor(pct):
