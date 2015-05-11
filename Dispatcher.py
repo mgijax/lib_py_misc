@@ -46,6 +46,7 @@ import types
 import subprocess
 import sys
 import os
+import top
 
 ###--------------------------------------------###
 ###--- status values for scheduled commands ---###
@@ -63,6 +64,11 @@ FINISHED = 3		# command has finished
 DEBUG = False			# issue debugging output (True) or not?
 START_TIME = time.time()	# initial time (in seconds) at load time
 
+MEASUREMENT_FREQUENCY = 5.0	# seconds between time/RAM measurements
+
+# when do we take the next measurements?
+NEXT_MEASUREMENTS = time.time() + MEASUREMENT_FREQUENCY
+
 ###-----------------###
 ###--- functions ---###
 ###-----------------###
@@ -79,6 +85,20 @@ def setDebug (
 
 	global DEBUG
 	DEBUG = mode
+	return
+
+def setMeaurementFrequency (
+	sec = 5.0	# float; number of seconds between measurements
+	):
+	# Purpose: define how frequently we want to take RAM/processor
+	#	measurements through calls to the OS via top.py
+	# Returns: nothing
+	# Assumes: 'sec' is a non-zero, non-negative float
+	# Modifies: global MEASUREMENT_FREQUENCY
+	# Throws: nothing
+
+	global MEASUREMENT_FREQUENCY
+	MEASUREMENT_FREQUENCY = sec
 	return
 
 ###---------------###
@@ -168,6 +188,9 @@ class Dispatcher:
 		self.hold = hold		  # are we in a "hold" state?
 						  # ...(can collect commands
 						  # ...but not execute them)
+		self.topProcesses = {}		  # maps from int ID to the 
+						  # ...top.Process object for
+						  # ...the unix process
 
 		# grab an ID for this Dispatcher and advance the counter
 
@@ -368,6 +391,62 @@ class Dispatcher:
 			return None
 		return self.returnCode[id]
 
+	def getMaxMemory (self,
+		id		# integer; ID for the desired command
+		):
+		# Purpose: retrieve the maximum memory usage for the desired
+		#	command (seen so far)
+		# Returns: float number of bytes (or None)
+		# Assumes: nothing
+		# Modifies: nothing
+		# Throws: nothing
+
+		if self.topProcesses.has_key(id):
+			return self.topProcesses[id].getMaxMemoryUsed()
+		return None
+
+	def getAverageMemory (self,
+		id		# integer; ID for the desired command
+		):
+		# Purpose: retrieve the average memory usage for the desired
+		#	command (seen so far)
+		# Returns: float number of bytes (or None)
+		# Assumes: nothing
+		# Modifies: nothing
+		# Throws: nothing
+
+		if self.topProcesses.has_key(id):
+			return self.topProcesses[id].getAverageMemoryUsed()
+		return None
+
+	def getMaxProcessor (self,
+		id		# integer; ID for the desired command
+		):
+		# Purpose: retrieve the maximum CPU percentage for the desired
+		#	command (seen so far)
+		# Returns: float CPU percentage (or None)
+		# Assumes: nothing
+		# Modifies: nothing
+		# Throws: nothing
+
+		if self.topProcesses.has_key(id):
+			return self.topProcesses[id].getMaxProcessorPct()
+		return None
+
+	def getAverageProcessor (self,
+		id		# integer; ID for the desired command
+		):
+		# Purpose: retrieve the average CPU percentage for the desired
+		#	command (seen so far)
+		# Returns: float CPU percentage (or None)
+		# Assumes: nothing
+		# Modifies: nothing
+		# Throws: nothing
+
+		if self.topProcesses.has_key(id):
+			return self.topProcesses[id].getAverageProcessorPct()
+		return None
+
 	def __manageSubprocesses (self):
 		# Purpose: (private) manage the subprocesses and waiting
 		#	commands for this Dispatcher
@@ -376,6 +455,13 @@ class Dispatcher:
 		# Modifies: does wait() calls to release any completed
 		#	subprocesses; starts new subprocesses
 		# Throws: nothing 
+
+		global NEXT_MEASUREMENTS
+
+		takeMeasurements = False
+		if time.time() >= NEXT_MEASUREMENTS:
+			takeMeasurements = True
+			NEXT_MEASUREMENTS = time.time() + MEASUREMENT_FREQUENCY
 
 		# close out finished processes
 
@@ -404,6 +490,8 @@ class Dispatcher:
 
 				self.elapsedTime[id] = time.time() - \
 					self.startTime[id]
+			elif takeMeasurements:
+				self.topProcesses[id].measure()
 
 		# if we have more commands waiting to be started, then we can
 		# start new subprocesses for them (up to the limit on the
@@ -442,6 +530,13 @@ class Dispatcher:
 						stdout=subprocess.PIPE,
 						stderr=subprocess.PIPE),
 					self.lastStartedID) )
+
+				# build a top.Process for the new process
+
+				proc = self.activeProcesses[-1][0]
+				self.topProcesses[self.lastStartedID] = \
+					top.getProcess(proc.pid)
+				self.topProcesses[self.lastStartedID].measure()
 
 				# upgrade the status for that command
 
