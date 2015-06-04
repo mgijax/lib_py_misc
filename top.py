@@ -18,7 +18,10 @@ LINUX = 2	# used to identify that we are running on a Linux box
 MODE = None	# value from either SOLARIS or LINUX, above (set automatically)
 
 # pulls a numeric group and a suffix group out of a RAM report (like 4.3M)
-ramRegex = re.compile ('^([0-9.]+)([KMGT])$')
+ramRegex = re.compile ('^([0-9.]+)([KkMmGgTt])$')
+
+# looks for just an integer
+intRegex = re.compile ('^([0-9]+)$')
 
 # pulls a numeric group out of a CPU percentage (like 33.2%)
 cpuRegex = re.compile ('^([0-9.]+)%?$')
@@ -178,11 +181,17 @@ class LinuxProcess (Process):
 		cmd = 'top -n 1 -b -p %s' % self.pid
 		(stdout, stderr, exitcode) = execute(cmd)
 
+		myLine = None
 		lines = stdout.split('\n')
-		lastLine = lines[-3]
+		pidStr = str(self.pid)
 
-		if lastLine:
-			fields = lastLine.split()
+		for line in lines:
+			if line.startswith(pidStr):
+				myLine = line
+				break
+
+		if myLine:
+			fields = myLine.split()
 			if len(fields) >= 5:
 				ram = fields[5]
 				if len(fields) >= 8:
@@ -228,6 +237,13 @@ def convertMemory(ram):
 
 	match = ramRegex.match(ram)
 	if not match:
+		# Linux systems do not use a suffix for kilobytes, so if we
+		# see just an integer, we can infer the measurement is in kb.
+
+		match = intRegex.match(ram)
+		if match:
+			return int(match.group(1)) * KB
+
 		return None
 
 	num = float(match.group(1))
