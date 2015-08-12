@@ -14,6 +14,7 @@ import gc
 
 SOLARIS = 1	# used to identify that we are running on a Solaris box
 LINUX = 2	# used to identify that we are running on a Linux box
+MAC = 3		# used to identify that we are running on a Max box
 
 MODE = None	# value from either SOLARIS or LINUX, above (set automatically)
 
@@ -227,6 +228,40 @@ class SolarisProcess (Process):
 					cpu = fields[8]
 		return ram, cpu
 
+class MacProcess (Process):
+	# Is: a Process object specific to the Linux operating system
+	# Does: knows how to collect data about Linux processes
+
+	def getData (self):
+		# collect data about this process and return a 2-item tuple:
+		# (ram, cpu) with each being a string; returns None for either
+		# or both measurements when they are unavailable
+
+		ram = None
+		cpu = None
+
+		# We use measrurements from 'top' as our Linux servers don't
+		# have prstat.
+
+		cmd = 'top -n 1 -l 1 -stats pid,cpu,vsize -pid %s' % self.pid
+		(stdout, stderr, exitcode) = execute(cmd)
+
+		myLine = None
+		lines = stdout.split('\n')
+		pidStr = str(self.pid)
+
+		for line in lines:
+			if line.startswith(pidStr):
+				myLine = line
+				break
+
+		if myLine:
+			fields = myLine.split()
+			if len(fields) >= 2:
+				ram = fields[2]
+				cpu = fields[1]
+		return ram, cpu
+
 ###--- Public Functions ---###
 
 def convertMemory(ram):
@@ -296,6 +331,8 @@ def getProcess(pid):
 	# returns a Process object for the specified Unix pid
 	if MODE == LINUX:
 		return LinuxProcess(pid)
+	elif MODE == MAC
+		return MacProcess(pid)
 	return SolarisProcess(pid)
 
 def getMyProcess():
@@ -306,5 +343,7 @@ def getMyProcess():
 
 if platform.system().lower().find('linux') >= 0:
 	MODE = LINUX
+elif platform.system().lower().find('darwin') >= 0:
+	MODE = MAC
 else:
 	MODE = SOLARIS
