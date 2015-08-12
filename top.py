@@ -331,7 +331,7 @@ def getProcess(pid):
 	# returns a Process object for the specified Unix pid
 	if MODE == LINUX:
 		return LinuxProcess(pid)
-	elif MODE == MAC
+	elif MODE == MAC:
 		return MacProcess(pid)
 	return SolarisProcess(pid)
 
