@@ -78,15 +78,14 @@
 #				===> Scientific Software Engineer III
 
 import string
-import regex
 import types
+import re
 
 ###--- Global Variables ---###
 
 # regular expression used to find a constant cited in a line as ${...}
 
-variable_re = regex.compile ('\${\([^}]+\)}')
-
+variable_re = re.compile('\\${([^}]+)}')
 ###--- Exception Information ---###
 
 error = 'rcdlib.error'		# exception raised in this module
@@ -638,25 +637,27 @@ def substitute (
 	pos = string.find (s, '$')		# position where we found $
 	if pos == -1:
 		return s
-	pos = variable_re.search (s, pos)	# pos. where we found ${...}
+
+	re_match = variable_re.search(s,pos)	# pos. where we found ${...}
 
 	t = ''			# new string we're building
 	last = 0		# We copied up to this position the last time
 				#	we copied characters into 't'.
-	while pos != -1:
+	while re_match:
+		pos,end = re_match.span()
 
 		# if we found part of a $${name} entry, then just chop off the
 		# first dollar sign and keep the rest of the string
 
 		if s[pos-1] == '$':
-			t = t + s[last:pos-1] + s[pos:variable_re.regs[0][1]]
+			t = t + s[last:pos-1] + s[pos:end]
 
 		# otherwise, add up to the beginning of the ${name}, look up
 		# the value for that constant's name, and add it.
 
 		else:
 			t = t + s[last:pos]
-			name = variable_re.group(1)
+			name = re_match.group(1)
 			if not dict.has_key (name):
 				raise error, BAD_CONSTANT % (name, lineNum)
 			t = t + dict[name]
@@ -664,8 +665,8 @@ def substitute (
 		# remember the last character position matched by the regex
 		# and go look for the next occurrence
 
-		last = variable_re.regs[0][1]
-		pos = variable_re.search (s, last)
+		last = end
+		re_match = variable_re.search (s, last)
 
 	return t + s[last:]
 #

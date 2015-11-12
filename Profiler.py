@@ -11,7 +11,7 @@
 #	output from the Profiler.
 
 import copy
-import regsub
+import re
 import sys
 import time
 import string
@@ -162,7 +162,7 @@ class Profiler:
 			'message'
 			)
 		fp.write(line)
-		fp.write(regsub.gsub ('[^ \n]', '-', line))
+		fp.write(re.sub ('[^ \\n]', '-', line))
 		return
 
 	def __printEntry (self,

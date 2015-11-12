@@ -68,8 +68,8 @@ import ignoreDeprecation
 import os
 import sys
 import types
-import regex
 import string
+import re
 
 # if we invoked this module as a script (rather than importing it), then we
 # need to define a usage statement:
@@ -93,43 +93,43 @@ ERR_UNKNOWN_KEYS = 'Uknown configuration options: %s'
 ###--- Regular Expressions for Parsing Configuration Files ---###
 
 # pick out a format specification:
-re_format = regex.compile ('#format: *\(.*\)', regex.casefold)
+re_format = re.compile('#format: *(.*)',re.IGNORECASE)
 
 # pick out comments and blank lines:
-re_comment = regex.compile ('\(#.*\)'		# comment
-			'\|'			# or
-			'\(^[ \t]*$\)')		# blank line
+re_comment = re.compile('(#.*)'			# comment
+			'|'			# or
+			'(^[ \\t]*$)')		# blank line
 
 # parse a tab or space-delimited line:
-re_tabbed = regex.compile ('\([^\t\n ]*\)'	# parameter name
-			'''[\t ]*['"]?'''	# spacing, optional quote
-			'''\([^'"\n]*\)'''	# parameter value
-			'''['"]?''')		# optional quote
+re_tabbed = re.compile('([^\\t\\n ]*)'		# parameter name
+			'[\\t ]*[\'"]?'		# spacing, optional quote
+			'([^\'"\\n]*)'		# parameter value
+			'[\'"]?')		# optional quote
 
 # parse a Bourne shell-formatted line:
-re_shell = regex.compile ('\([^\t =]*\)'	# parameter name
-			'''[\t ]*=[\t ]*'''	# spacing, =, spacing
-			'''['"]?'''		# optional quote
-			'''\([^'"\n]*\)'''	# parameter value
-			'''['"]?''')		# optional quote
+re_shell = re.compile('([^\\t =]*)'		# parameter name
+			'[\\t ]*=[\\t ]*'	# spacing, =, spacing
+			'[\'"]?'		# optional quote
+			'([^\'"\\n]*)'		# parameter value
+			'[\'"]?')		# optional quote
 
 # parse a C-shell-formatted line using 'set':
-re_cshell1 = regex.compile ('set[\t ]+'		# set keyword, spacing
-			'''\([^\t ]*\)'''	# parameter name
-			'''[\t ]*=[\t ]*'''	# spacing, =, spacing
-			'''['"]?'''		# optional quote
-			'''\([^'"\n]*\)'''	# parameter value
-			'''['"]?''')		# optional quote
+re_cshell1 = re.compile('set[\\t ]+'		# set keyword, spacing
+			'([^\\t ]*)'		# parameter name
+			'[\\t ]*=[\\t ]*'	# spacing, =, spacing
+			'[\'"]?'		# optional quote
+			'([^\'"\\n]*)'		# set keyword, spacing
+			'[\'"]?')		# optional quote
 
 # parse a C-shell-formatted line using 'setenv':
-re_cshell2 = regex.compile ('setenv[\t ]+'	# setenv keyword, spacing
-			'''\([^\t\n ]+\)'''	# parameter name
-			'''[\t ]*['"]?'''	# spacing, optional quote
-			'''\([^'"\n]*\)'''	# parameter value
-			'''['"]?''')		# optional quote
+re_cshell2 = re.compile('setenv[\\t ]+'		# setenv keyword, spacing
+			'([^\\t\\n ]+)'		# parameter name
+			'[\\t ]*[\'"]?'		# spacing, optional quote
+			'([^\'"\\n]*)'		# parameter value
+			'[\'"]?')		# optional quote
 
 # find one parameter name embedded within another parameter value:
-re_parm = regex.compile ('\${\([^}]+\)}')	# format like ${MYPARM}
+re_parm = re.compile('\\${([^}]+)}')		# format like ${MYPARM}
 
 ###--- Other Global Variables ---###
 
@@ -314,8 +314,9 @@ class Configuration:
 
 		# check for other formats, as specified in the first line:
 
-		if re_format.match(lines[0]) != -1:
-			format = re_format.group(1)
+		format_match = re_format.match(lines[0])
+		if format_match:
+			format = format_match.group(1)
 			if format == 'tab':		# tab-delimited
 				pass
 			elif format == 'sh':		# Bourne shell
@@ -333,11 +334,12 @@ class Configuration:
 		# blank lines:
 
 		for line in lines:
-			if re_comment.match (line) != -1:
+			if re_comment.match (line):
 				continue
-			for re in regexes:
-				if re.match (line) != -1:
-					field, value = re.group (1,2)
+			for r_e in regexes:
+				re_match = r_e.match(line)
+				if re_match:
+					field, value = re_match.group (1,2)
 					self.options [field] = value
 					break
 
@@ -650,10 +652,12 @@ class Configuration:
 		if steps == 0:
 			raise error, 'Could not resolve parameter.'
 		s = self.options[key]
-		while re_parm.search (s) != -1:
-			start, stop = re_parm.regs[0]
-			parm = re_parm.group(1)
+		re_search_match = re_parm.search(s)
+		while re_search_match:
+			start, stop = re_search_match.span()
+			parm = re_search_match.group(1)
 			s = s[:start] + self.resolve(parm, steps-1) + s[stop:]
+			re_search_match = re_parm.search(s)
 		return s
 
 ###--- Main Program ---###

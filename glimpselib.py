@@ -11,7 +11,7 @@
 
 import os
 import string
-import regsub
+import re
 
 SP = ' '
 indexerror = 'indexerror'		# exception raised if problem occurs
@@ -33,7 +33,7 @@ def quote(s):
 	"""
 
 	# Strip all quotes first, then quote the whole search string.
-	s = regsub.gsub('[\'\"]', '', s)
+	s = re.sub('[\'"]', '', s)
 	return '\'' + s + '\''
 
 
@@ -41,12 +41,12 @@ def wais_to_glimpse(query):
 	"""Converts wais query to glimpse query."""
 
 	query = string.lower(query)
-	query = regsub.gsub(' and ', ';', query)
-	query = regsub.gsub(' or ', ',', query)
-	query = regsub.gsub(' not ', '!', query)
-	query = regsub.gsub('*', '#', query)
-	query = regsub.gsub('(', '{', query)
-	query = regsub.gsub(')', '}', query)
+	query = re.sub(' and ', ';', query)
+	query = re.sub(' or ', ',', query)
+	query = re.sub(' not ', '!', query)
+	query = re.sub('*', '#', query)
+	query = re.sub('\\(', '{', query)
+	query = re.sub('\\)', '}', query)
 	return query
 
 

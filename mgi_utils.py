@@ -6,12 +6,12 @@ import string
 import types
 import time
 import ignoreDeprecation
-import regex
 import sys
 import tempfile
 from signal import signal, alarm, SIGALRM
 import runCommand
 from types import *
+import symbolsort
 
 ###--- Exception Information ---###
 error = 'mgi_utils.error'          # standard exception raised by the module
@@ -340,73 +340,9 @@ def date( format = '%c' ):
 	return s
 
 
-def byNumeric( a, b ):
-	"""String comparison that compares numeric substrings separately.
-	#
-	# Requires:
-	#       a, b - strings
-	#
-	# Example:
-	#	Here's how to sort a list of marker symbols:
-	#
-	#		l.sort( mgi_utils.byNumeric )
-	#
-	# Bugs:
-	#	- In some cases, substrings are converted to lower case, which
-	#	  can give random results back (see code).
-	#	- Also, it's kinda slow.  :-)
-	#	- If either of the strings contain numeric substrings that are
-	#	  too big for string.atoi to handle, an exception is raised.
-	#	- Ren1 == ren2
-	#
-	# It's slow because passing any comparison function to the list sort
-	# method slows things to a crawl.
-	#
-	# Note:
-	#	As this is both buggy and slow, code should probably be
-	#	migrated away from using this function.  A better solution is
-	#	in the symbolsort.py library.
-	"""
- 
-        def getIndex( s ): # returns the length of the first chunk.
-                if s[:1] in map( None, string.digits ):
-                        result = regex.search( '[^0-9]', s )
-                else:
-                        result = regex.search( '[0-9]', s )
-		if result < 0: # It's the last chunk in the string.
-			result = len( s )
-		return result
- 
-	if type(a) != types.StringType or type(b) != types.StringType:
-		return cmp(a,b)
-
-        indexA = getIndex( a )
-        indexB = getIndex( b )
-        DIGITS = map( None, string.digits )
- 
-	if a == b: # not necessary, but maybe speeds things up!
-		result = 0
-        elif a[:indexA] == b[:indexB]:
-                if len( a ) == indexA:
-                        if len( b ) == indexB:
-                                result = 0
-                        else:
-                                result = -1
-                elif len( b ) == indexB:
-                        result = 1
-                else:
-                        result = bySymbol( a[indexA:], b[indexB:] )
-        elif a[:1] in DIGITS and b[:1] in DIGITS:
-                result = cmp( string.atoi(a[:indexA]), string.atoi(b[:indexB]) )
-        else:   # This returns can random results (eg. ren1 =? Ren1)
-                # OK if data is already in a reasonable order though.
-                result = cmp(string.lower(a[:indexA]),string.lower(b[:indexB]))
-
-	return result
-
 # aliases
-byFilename = byNumeric
-bySymbol = byNumeric
+byFilename = symbolsort.nomenCompare
+bySymbol = symbolsort.nomenCompare
 
 def setAlarm(timeout, alarmclock=AlarmClock):
 	# Schedule a UNIX alarm call after timeout seconds
