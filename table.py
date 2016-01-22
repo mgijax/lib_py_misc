@@ -524,7 +524,7 @@ class Table:
 			return self.cellAdornments[columnNumber]
 		return ''
 
-	def __netscape(self):
+	def __htmltable(self):
 		"""Generates an HTML Table object using Netscape-style tags."""
 
 		s = ''
@@ -1163,13 +1163,13 @@ class Table:
 		# Decide what format to use.
 		if format == 'auto':
 			if os.environ.has_key('REMOTE_ADDR'):
-				format = 'pre'
+				format = 'html'
 			else:
 				format = 'text'
 
 		#Generate the table.
-		if format == 'netscape':
-			s = self.__netscape()
+		if format == 'html':
+			s = self.__htmltable()
 		elif format == 'text':
 			s = self.__text(pre=0)
 		elif format == 'pre':
