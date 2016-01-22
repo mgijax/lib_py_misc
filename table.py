@@ -144,9 +144,6 @@ FUNCTIONS
 
 There are a few functions that are public, for convenience.
 
-browser_is_netscape():
-	Returns non-zero if browser is Netscape.
-
 filter_html( string ):
 	Strips HTML tags from a string.
 
@@ -202,14 +199,6 @@ tag_pattern = re.compile( '<[^>]*>' )
 
 # Functions
 # =========
-
-def browser_is_netscape():
-	"""Returns non-zero if browser is Netscape."""
-
-	if os.environ.has_key('HTTP_USER_AGENT'):
-		return re.match('Mozilla', os.environ['HTTP_USER_AGENT']) + 1
-	else:
-		return 0
 
 
 def filter_html( s ):
@@ -564,12 +553,6 @@ class Table:
 				for j in range(len(self.body[i])):
 					self.body[i][j] = gsub('\\n', '<br>',
 						strip(self.body[i][j]))
-
-		# Convert spaces in heading to &nbsp; (Netscape only).
-		if self.heading_nobreak and browser_is_netscape():
-			for i in range(len(self.heading)):
-				self.heading[i] = gsub( ' ', '&nbsp;',
-					self.heading[i] )
 
 		# Initialize colspan property to 1 for each
 		# heading column if user doesn't provide it.
@@ -1180,10 +1163,7 @@ class Table:
 		# Decide what format to use.
 		if format == 'auto':
 			if os.environ.has_key('REMOTE_ADDR'):
-				if browser_is_netscape():
-					format = 'netscape'
-				else:
-					format = 'pre'
+				format = 'pre'
 			else:
 				format = 'text'
 
