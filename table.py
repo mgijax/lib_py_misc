@@ -1114,8 +1114,6 @@ class Table:
 		them to stderr?
 
 		Not implemented yet.  (Duh...)
-
-		This might be a good test for Geoff's new sybasemodule.
 		"""
 		pass
 

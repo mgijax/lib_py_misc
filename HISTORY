@@ -1,8 +1,14 @@
+TAG: lib_py_misc-6-0-3-1
+DATE: 03/29/2016
+STAFF: lec 
+TR12069
+1) remove obsolete stats.py (replaced by lib_py_postgres/stats_pg.py)
+2) remove obsolete lib_py_misc.re.patch
+
 TAG: lib_py_misc-6-0-2-2,lib_py_misc-6-0-2-3
 DATE: 1/22/2016
 STAFF: kstone
 1) TR12235 - Remove broken 'browser_is_netscape' method. It is unnecessary.
-
 
 TAG: lib_py_misc-6-0-2-1
 DATE: 12/08/2015
