@@ -240,7 +240,6 @@ class Tee:
 	#	#!./python
 	#
 	#	
-	#   import db 
 	#   import mgi_utils
 	#
 	#	tee = mgi_utils.Tee('junk.log')
