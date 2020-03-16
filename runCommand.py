@@ -142,7 +142,7 @@ class UnixCommand:
 
                         # set up the environment for the command:
 
-                        for envvar in self.envvars.keys():
+                        for envvar in list(self.envvars.keys()):
                                 os.environ[envvar] = self.envvars[envvar]
 
                         # run the command, catch the exit code, and bail out:
@@ -229,12 +229,12 @@ if __name__ == '__main__':
                 runCommand ('env | sort | grep -c AAAAAA',
                         envvars={'AAAAAA' : 'BBBB'}
                         )
-        print '----------stdout'
-        print stdout[:-1]
-        print '----------stderr'
-        print stderr[:-1]
-        print '----------exit code'
-        print code
+        print('----------stdout')
+        print(stdout[:-1])
+        print('----------stderr')
+        print(stderr[:-1])
+        print('----------exit code')
+        print(code)
 #
 # Warranty Disclaimer and Copyright Notice
 # 

@@ -153,7 +153,7 @@ class AlarmClock:
                 #       is still pending
 
                 if self.alarmTime:
-                        raise error, 'An alarm has already been set.'
+                        raise error('An alarm has already been set.')
                 self.alarmTime = sec
                 self.setCallback (userFn)
                 signal.signal (signal.SIGALRM, self.invokeHandler)
@@ -213,8 +213,8 @@ class AlarmClock:
                 #       for functions / methods that handle signals.  For
                 #       the purposes of this function, we ignore them.
 
-                raise timeUp, 'The time (%s sec) has expired.' % \
-                        self.alarmTime
+                raise timeUp('The time (%s sec) has expired.' % \
+                        self.alarmTime)
                 return
 
         def isPending (self):
@@ -239,52 +239,52 @@ alarmClock = AlarmClock()       # (private) object for use w/in this module
 if __name__ == '__main__':
         def myTest(sig, stack):
                 # function to test the ability to call an arbitrary function
-                print 'PASS - Custom handler called here'
+                print('PASS - Custom handler called here')
                 raise SystemExit
                 return
 
         # try a 2-second alarm with the default handler
         try:
-                print 'setting 2 second alarm'
+                print('setting 2 second alarm')
                 set (2)
                 while 1:
                         pass
         except timeUp:
-                print 'PASS - Default handler invoked, timeUp exception raised'
+                print('PASS - Default handler invoked, timeUp exception raised')
 
         # try to set an alarm while we're still waiting for another to sound
-        print
+        print()
         try:
-                print 'setting 10 second alarm'
+                print('setting 10 second alarm')
                 set (10)
-                print 'trying to set another'
+                print('trying to set another')
                 set (15)
-                print 'ERROR - should not get here'
-        except error, value:
-                print 'PASS - %s' % value
+                print('ERROR - should not get here')
+        except error as value:
+                print('PASS - %s' % value)
 
         # note that the previous alarm is still set, then clear it
-        print
-        print 'clearing alarm'
+        print()
+        print('clearing alarm')
         before = alreadySet()
         clear()
         after = alreadySet()
         if (before == 1) and (after == 0):
-                print 'PASS - alarm cleared'
+                print('PASS - alarm cleared')
         else:
-                print 'ERROR - alarm was not cleared appropriately'
+                print('ERROR - alarm was not cleared appropriately')
 
         # set an alarm, then try to reset it using one with a custom handler
-        print
+        print()
         try:
-                print 'setting 10-second alarm with default handler'
+                print('setting 10-second alarm with default handler')
                 set (10)
-                print 'overriding with 2-second alarm and custom message'
+                print('overriding with 2-second alarm and custom message')
                 reset (2, myTest)
                 while 1:
                         pass
         except timeUp:
-                print 'ERROR - should not get here'
+                print('ERROR - should not get here')
 
 ###--- end self-test ---###
 #

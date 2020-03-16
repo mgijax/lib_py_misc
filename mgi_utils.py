@@ -50,7 +50,7 @@ def mkdirs(path,                        # string, the path to make
 
         # if 'path' exists but is a file raise 'error'
         if os.path.isfile(path):
-                raise error, IS_FILE % path
+                raise error(IS_FILE % path)
 
         # if 'path' exists return None
         if os.path.isdir(path):
@@ -79,7 +79,7 @@ def mkdirs(path,                        # string, the path to make
                 cmd = 'mkdir -m %s -p %s' % (permissions, head)
                 (stdout, stderr, exitCode) = runCommand.runCommand(cmd)
                 if exitCode or stderr:
-                       raise error, stderr
+                       raise error(stderr)
 
         return head
 
@@ -104,7 +104,7 @@ def show_count(obj):
         # Note:
         #       Used in summary and detail screens.
         """
-        if type(obj) is types.IntType:
+        if type(obj) is int:
                 count = obj
         else:
                 try:
@@ -154,7 +154,7 @@ def pc(count):
         #       use for any new software.  Use showcount() instead.
         """
 
-        print show_count(count)
+        print(show_count(count))
 
 
 def vali_date(date):
@@ -350,7 +350,7 @@ def setAlarm(timeout, alarmclock=AlarmClock):
 
 def addQuotes (list):
         # return a copy of list, with each element in double quotes
-        return map (lambda x : '"%s"' % x, list)
+        return ['"%s"' % x for x in list]
 
 def joinPaths (*item):
         # Purpose: join all the items passed in into one path, which we return
@@ -403,7 +403,7 @@ def send_Mail (
         # provide a default for sendmail and allow the config file to override
 
         sendmail = '/usr/lib/sendmail'
-        if (config != None and config.has_key('SENDMAIL')):
+        if (config != None and 'SENDMAIL' in config):
                 sendmail = config['SENDMAIL']
 
         # build a unique temporary filename
@@ -443,7 +443,7 @@ def askUserForOneChar (
         ans = ""
         while (ans == ""):
                 try:
-                        ans = raw_input( question + " [%s] " % okAnswers)
+                        ans = input( question + " [%s] " % okAnswers)
                 except EOFError :
                         ans = None
                         break

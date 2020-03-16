@@ -65,7 +65,7 @@ class Set:
                 # Throws: nothing
 
                 s = ''                                  # string we're building
-                for item in self.elements.keys ():      # concatenate the string
+                for item in list(self.elements.keys ()):      # concatenate the string
                         s = s + ', ' + str (item)       # rep of each item to s
                 return '%s' % s[2:]                     # skip the leading
                                                         # comma and space
@@ -105,7 +105,7 @@ class Set:
                 # Notes: This is for testing a single item, while containsAll
                 #       is useful for testing multiple items.
 
-                return self.elements.has_key (val)
+                return val in self.elements
 
         def containsAll (self,
                 *val            # items to look for in the Set
@@ -119,7 +119,7 @@ class Set:
                 # Throws: nothing
 
                 for item in val:                        # test each item
-                        if not self.elements.has_key (item):
+                        if item not in self.elements:
                                 return 0                # found one missing
                 return 1
 
@@ -130,7 +130,7 @@ class Set:
                 # Effects: see Purpose
                 # Throws: nothing
 
-                return self.elements.keys ()
+                return list(self.elements.keys ())
 
         def remove (self,
                 *val            # items to remove from the Set
@@ -144,7 +144,7 @@ class Set:
                 # Throws: nothing
 
                 for item in val:
-                        if self.elements.has_key (item):
+                        if item in self.elements:
                                 del self.elements [item]
                 return
 
@@ -169,7 +169,7 @@ class Set:
                 # Throws: nothing
 
                 result_set = Set ()
-                for item in self.elements.keys ():
+                for item in list(self.elements.keys ()):
                         if S.contains (item):
                                 result_set.add (item)
                 return result_set
@@ -185,7 +185,7 @@ class Set:
                 # Throws: nothing
 
                 result_set = S.clone ()                 # make a copy of S
-                for item in self.elements.keys ():      # then add the items
+                for item in list(self.elements.keys ()):      # then add the items
                         result_set.add (item)           # from self to it.
                 return result_set
 
@@ -200,7 +200,7 @@ class Set:
                 # Throws: nothing
 
                 result_set = Set ()
-                for item in self.elements.keys ():
+                for item in list(self.elements.keys ()):
                         if not S.contains (item):
                                 result_set.add (item)
                 return result_set
@@ -219,7 +219,7 @@ class Set:
                 # Throws: nothing
 
                 is_a_subset = 1                         # assume it is
-                for item in self.elements.keys ():
+                for item in list(self.elements.keys ()):
                         if not S.contains (item):
                                 is_a_subset = 0         # it is not
                                 break                   # skip rest of loop
@@ -262,7 +262,7 @@ class Set:
                 # Effects: nothing
                 # Throws: nothing
 
-                return len (self.values ())
+                return len (list(self.values ()))
 #
 # Warranty Disclaimer and Copyright Notice
 # 

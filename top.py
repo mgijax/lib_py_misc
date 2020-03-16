@@ -284,7 +284,7 @@ def convertMemory(ram):
         num = float(match.group(1))
         suffix = match.group(2)
 
-        if ramMultipliers.has_key(suffix):
+        if suffix in ramMultipliers:
                 return num * ramMultipliers[suffix]
         return None 
 

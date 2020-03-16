@@ -162,13 +162,13 @@ class RcdFile:
                                         # missing a key or if it has the same
                                         # key as one we've already saved.
 
-                                        if not rcd.has_key(keyName):
-                                                raise error, MISSING_KEY % \
-                                                        (keyName, lineCt)
+                                        if keyName not in rcd:
+                                                raise error(MISSING_KEY % \
+                                                        (keyName, lineCt))
                                         key = rcd[keyName]
-                                        if self.rcds.has_key (key):
-                                                raise error, NON_UNIQUE % \
-                                                        (key, lineCt)
+                                        if key in self.rcds:
+                                                raise error(NON_UNIQUE % \
+                                                        (key, lineCt))
 
                                         # otherwise, save it in our set.
 
@@ -181,7 +181,7 @@ class RcdFile:
                                         state = OUT_RCD
 
                                 elif name == '[':
-                                        raise error, EXTRA_OPEN % lineCt
+                                        raise error(EXTRA_OPEN % lineCt)
 
                                 # this line defines an attribute for the
                                 # current Rcd object.
@@ -211,7 +211,7 @@ class RcdFile:
                                 # This should never occur, but let's trap it
                                 # just to be sure.
 
-                                raise error, PROGRAMMER_ERROR
+                                raise error(PROGRAMMER_ERROR)
 
                         name, value, lineCt = readAndParseLine (fp, lineCt)
 
@@ -219,7 +219,7 @@ class RcdFile:
                 # definition, then there was a problem somewhere.
 
                 if state != OUT_RCD:
-                        raise error, BAD_MARKUP
+                        raise error(BAD_MARKUP)
                 fp.close()
                 return
 
@@ -234,7 +234,7 @@ class RcdFile:
                 # Effects: nothing
                 # Throws: nothing
 
-                if self.rcds.has_key (keyValue):
+                if keyValue in self.rcds:
                         return self.rcds[keyValue]
                 return None
 
@@ -257,7 +257,7 @@ class RcdFile:
                 # Effects: nothing
                 # Throws: nothing
 
-                return self.rcds.has_key (keyValue)
+                return keyValue in self.rcds
 
         def keys (self):
                 # Purpose: get a list of key values for Rcd objects defined
@@ -267,7 +267,7 @@ class RcdFile:
                 # Effects: nothing
                 # Throws: nothing
 
-                return self.rcds.keys()
+                return list(self.rcds.keys())
 
         def getFilename (self):
                 # Purpose: get the name of the file which we read to create
@@ -291,7 +291,7 @@ class RcdFile:
                 # Effects: nothing
                 # Throws: nothing
 
-                if self.constants.has_key (name):
+                if name in self.constants:
                         return self.constants[name]
                 return None
 
@@ -303,7 +303,7 @@ class RcdFile:
                 # Effects: nothing
                 # Throws: nothing
 
-                return self.rcds.items()
+                return list(self.rcds.items())
 
         def constantItems (self):
                 # Purpose: get the set of all named constants and their values
@@ -314,7 +314,7 @@ class RcdFile:
                 # Effects: nothing
                 # Throws: nothing
 
-                return self.constants.items()
+                return list(self.constants.items())
 
 class Rcd:
         # IS: one record, containing a set of fields and values
@@ -353,7 +353,7 @@ class Rcd:
                 # Effects: nothing
                 # Throws: nothing
 
-                if self.values.has_key (key):
+                if key in self.values:
                         del self.values[key]
                 return
 
@@ -368,7 +368,7 @@ class Rcd:
                 # Throws: nothing
                 # Notes: If 'key' has no value defined, then we return None
 
-                if self.values.has_key (key):
+                if key in self.values:
                         return self.values[key]
                 return None
 
@@ -405,7 +405,7 @@ class Rcd:
                 # Effects: nothing
                 # Throws: nothing
 
-                return self.values.has_key (key)
+                return key in self.values
 
         def keys (self):
                 # Purpose: get a list of fieldnames defined in 'self'
@@ -414,7 +414,7 @@ class Rcd:
                 # Effects: nothing
                 # Throws: nothing
 
-                return self.values.keys()
+                return list(self.values.keys())
 
         def items (self):
                 # Purpose: get the set of all fieldnames and their values
@@ -426,7 +426,7 @@ class Rcd:
                 # Effects: nothing
                 # Throws: nothing
 
-                return self.values.items()
+                return list(self.values.items())
 
         def add (self,
                 key,            # string; fieldname to define
@@ -441,9 +441,9 @@ class Rcd:
                 # Throws: nothing
                 # Notes: see __setitem__() if you want to replace old values
 
-                if not self.values.has_key (key):
+                if key not in self.values:
                         self.values[key] = value
-                elif type(self.values[key]) == types.StringType:
+                elif type(self.values[key]) == bytes:
                         self.values[key] = [ self.values[key], value ]
                 else:
                         self.values[key].append (value)
@@ -462,7 +462,7 @@ class Rcd:
                 #       empty list.
 
                 item = self[key]
-                if type(item) == types.StringType:
+                if type(item) == bytes:
                         return [ item ]
                 elif item == None:
                         return []
@@ -483,7 +483,7 @@ class Rcd:
                 #       joined together into a single string using 'delimiter'
 
                 item = self[key]
-                if type(item) == types.ListType:
+                if type(item) == list:
                         return string.join (item, delimiter)
                 elif item == None:
                         return ''
@@ -506,9 +506,9 @@ class Rcd:
                 #       the user requests one for 'key' again.  If 'key' is
                 #       not defined, this function returns None.
 
-                if not self.regex.has_key (key):
+                if key not in self.regex:
                         item = self[key]
-                        if type(item) == types.StringType:
+                        if type(item) == bytes:
                                 self.regex[key] = regex.compile (item)
                         elif item == None:
                                 self.regex[key] = None
@@ -601,7 +601,7 @@ def readAndParseLine (
                         # equals sign on it.
 
                         elif line:
-                                raise error, NO_EQUALS % lineCt
+                                raise error(NO_EQUALS % lineCt)
 
                 line = fp.readline()
                 lineCt = lineCt + 1
@@ -658,8 +658,8 @@ def substitute (
                 else:
                         t = t + s[last:pos]
                         name = re_match.group(1)
-                        if not dict.has_key (name):
-                                raise error, BAD_CONSTANT % (name, lineNum)
+                        if name not in dict:
+                                raise error(BAD_CONSTANT % (name, lineNum))
                         t = t + dict[name]
 
                 # remember the last character position matched by the regex

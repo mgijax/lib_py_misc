@@ -299,7 +299,7 @@ if __name__ == '__main__':
 
         i = 0
         while i < maxCount:
-                if dict.has_key(i):
+                if i in dict:
                         pass
                 i = i + 1
         profiler.stamp ('tested for %d items in dict' % maxCount)

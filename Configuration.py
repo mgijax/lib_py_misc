@@ -164,7 +164,7 @@ def get_Configuration (
         # Configuration object that we constructed last time
 
         key = (filename, findFile)
-        if MEMORY.has_key (key):
+        if key in MEMORY:
                 return MEMORY[key]
 
         # Otherwise, read and parse the file, create the Configuration object,
@@ -213,8 +213,8 @@ def find_path (
                                 script_path = dir
                                 break
                 else:
-                        raise error, 'Cannot find %s in your PATH' % \
-                                script_name
+                        raise error('Cannot find %s in your PATH' % \
+                                script_name)
 
         pieces = []     # initial set of pieces of the path to find 's',
                         # before any clean-up takes place
@@ -299,7 +299,7 @@ class Configuration:
                 if findFile == 1:
                         filename = find_path (filename)
                         if filename is None:
-                                raise error, ERR_MISSING
+                                raise error(ERR_MISSING)
 
                 # load the configuration file and proceed to parse it.
 
@@ -327,7 +327,7 @@ class Configuration:
                         elif format == 'csh':
                                 regexes = [ re_cshell1, re_cshell2 ]
                         else:
-                                raise error, ERR_UNRECOGNIZED
+                                raise error(ERR_UNRECOGNIZED)
                         del lines[0]
 
                 # parse the remaining lines in the file, ignoring comments and
@@ -347,7 +347,7 @@ class Configuration:
                 # add the colon-delimited list of directories to the
                 # PYTHONPATH of the currently executing process:
 
-                if self.options.has_key ('LIBDIRS'):
+                if 'LIBDIRS' in self.options:
                         libdirs = string.split (self['LIBDIRS'], ':')
                         libdirs.reverse()
                         for libdir in libdirs:
@@ -358,7 +358,7 @@ class Configuration:
                 # shared knowledge, open the file and read in the parms,
                 # giving precedence to the parms found in original config 
 
-                if self.options.has_key ('GLOBAL_CONFIG') and os.path.exists (self['GLOBAL_CONFIG']):
+                if 'GLOBAL_CONFIG' in self.options and os.path.exists (self['GLOBAL_CONFIG']):
                     globalConfig = get_Configuration(self['GLOBAL_CONFIG'])
                     self.merge(globalConfig)
                 return
@@ -410,7 +410,7 @@ class Configuration:
                 # Effects: nothing
                 # Throws: nothing
 
-                return self.options.has_key (key)
+                return key in self.options
 
         def items (self):
                 # Purpose: get the whole set of parameter names and values
@@ -425,7 +425,7 @@ class Configuration:
                 #       self.rawItems() method instead.
 
                 list = []
-                for name in self.keys():
+                for name in list(self.keys()):
                         list.append ( (name, self[name]) )
                 return list
 
@@ -436,7 +436,7 @@ class Configuration:
                 # Effects: nothing
                 # Throws: nothing
 
-                return self.options.keys()
+                return list(self.options.keys())
 
         ###--- Other Data Access Methods ---###
 
@@ -473,7 +473,7 @@ class Configuration:
                 
                 temp = {}
                 
-                for key in self.keys():
+                for key in list(self.keys()):
                         temp[key] = self.resolve(key)
                 
                 return temp
@@ -497,11 +497,11 @@ class Configuration:
 
                 unknown = []
                 for key in desired_keys:
-                        if not self.has_key(key):
+                        if key not in self:
                                 unknown.append (key)
                 if unknown:
-                        raise error, ERR_UNKNOWN_KEYS % \
-                                string.join (unknown, ', ')
+                        raise error(ERR_UNKNOWN_KEYS % \
+                                string.join (unknown, ', '))
                 return
 
         def get (self,
@@ -527,7 +527,7 @@ class Configuration:
                 # Effects: nothing
                 # Throws: nothing
 
-                if self.has_key (key):
+                if key in self:
                         return self[key]
                 return None
 
@@ -542,8 +542,8 @@ class Configuration:
                 # Effects: nothing
                 # Throws: nothing
 
-                return map (lambda (field, value): 'setenv %s "%s"' % \
-                        (field, value), self.items())
+                return ['setenv %s "%s"' % \
+                        (field_value[0], field_value[1]) for field_value in list(self.items())]
 
         def asSh (self):
                 # Purpose: build a Bourne shell version of the configuration
@@ -555,7 +555,7 @@ class Configuration:
                 # Throws: nothing
 
                 lines = []
-                for (field, value) in self.items():
+                for (field, value) in list(self.items()):
                         lines.append ('%s="%s"' % (field, value))
                         lines.append ('export %s' % field)
                 return lines
@@ -569,8 +569,7 @@ class Configuration:
                 # Effects: nothing
                 # Throws: nothing
 
-                return map (lambda (field, value): '%s\t%s' % (field, value),
-                        self.items())
+                return ['%s\t%s' % (field_value1[0], field_value1[1]) for field_value1 in list(self.items())]
 
         def write (self,
                 file=sys.stdout,        # file pointer; file to write to
@@ -593,7 +592,7 @@ class Configuration:
                 elif format == 'csh':
                         lines = self.asCsh()
                 else:
-                        raise error, ERR_UNRECOGNIZED
+                        raise error(ERR_UNRECOGNIZED)
 
                 file.write ('#format: %s\n' % format)
                 for line in lines:
@@ -609,8 +608,8 @@ class Configuration:
                 # Effects: Adds all of the values that are not in the present object, into the present object.
                 # Throws:
                 
-                for key in config.keys():
-                        if not self.has_key(key):
+                for key in list(config.keys()):
+                        if key not in self:
                                 self[key] = config.getUnresolvedValue(key)
 
         ###--- Private Methods ---###
@@ -626,7 +625,7 @@ class Configuration:
                 #       which are embedded within other parameter values.
                 #       See self.items() for that functionality.
 
-                return self.options.items()     
+                return list(self.options.items())     
         
         def resolve (self,
                 key,            # string; parameter name
@@ -650,7 +649,7 @@ class Configuration:
                 #               A       "My ${A} value"
 
                 if steps == 0:
-                        raise error, 'Could not resolve parameter.'
+                        raise error('Could not resolve parameter.')
                 s = self.options[key]
                 re_search_match = re_parm.search(s)
                 while re_search_match:
@@ -664,7 +663,7 @@ class Configuration:
 
 if __name__ == '__main__':
         if len(sys.argv) != 3:
-                print USAGE
+                print(USAGE)
                 sys.exit(0)
 
         # read the specified Configuration file, and write the values to

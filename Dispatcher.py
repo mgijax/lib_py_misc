@@ -202,7 +202,7 @@ class Dispatcher:
                 # ahead and schedule them
 
                 if initialCommands:
-                        if type(initialCommands[0]) == types.StringType:
+                        if type(initialCommands[0]) == bytes:
                                 initialCommands = [ initialCommands ]
                         for cmd in initialCommands:
                                 self.schedule (cmd)
@@ -247,7 +247,7 @@ class Dispatcher:
 
         def getWaitingProcessCount (self):
                 i = 0
-                for v in self.status.values():
+                for v in list(self.status.values()):
                         if v == WAITING:
                                 i = i + 1
                 return i
@@ -266,7 +266,7 @@ class Dispatcher:
 
                 # if we were given a string, split it into a list
 
-                if type(argv) == types.StringType:
+                if type(argv) == bytes:
                         argv = argv.split(' ')
 
                 # add to the list of commands and their string representations
@@ -321,7 +321,7 @@ class Dispatcher:
                 # Throws: nothing
 
                 self.__manageDispatchers()      # housekeeping
-                if not self.elapsedTime.has_key(id):
+                if id not in self.elapsedTime:
                         return UNKNOWN
                 return self.elapsedTime[id]
 
@@ -337,7 +337,7 @@ class Dispatcher:
                 # Throws: nothing
 
                 self.__manageDispatchers()      # housekeeping
-                if not self.status.has_key(id):
+                if id not in self.status:
                         return UNKNOWN
                 return self.status[id]
 
@@ -354,7 +354,7 @@ class Dispatcher:
                 # Throws: nothing
 
                 self.__manageDispatchers()      # housekeeping
-                if not self.stdout.has_key(id):
+                if id not in self.stdout:
                         return None
                 return self.stdout[id]
 
@@ -371,7 +371,7 @@ class Dispatcher:
                 # Throws: nothing
 
                 self.__manageDispatchers()      # housekeeping
-                if not self.stderr.has_key(id):
+                if id not in self.stderr:
                         return None
                 return self.stderr[id]
 
@@ -387,7 +387,7 @@ class Dispatcher:
                 # Throws: nothing
 
                 self.__manageDispatchers()      # housekeeping
-                if not self.returnCode.has_key(id):
+                if id not in self.returnCode:
                         return None
                 return self.returnCode[id]
 
@@ -401,7 +401,7 @@ class Dispatcher:
                 # Modifies: nothing
                 # Throws: nothing
 
-                if self.topProcesses.has_key(id):
+                if id in self.topProcesses:
                         return self.topProcesses[id].getMaxMemoryUsed()
                 return None
 
@@ -415,7 +415,7 @@ class Dispatcher:
                 # Modifies: nothing
                 # Throws: nothing
 
-                if self.topProcesses.has_key(id):
+                if id in self.topProcesses:
                         return self.topProcesses[id].getAverageMemoryUsed()
                 return None
 
@@ -429,7 +429,7 @@ class Dispatcher:
                 # Modifies: nothing
                 # Throws: nothing
 
-                if self.topProcesses.has_key(id):
+                if id in self.topProcesses:
                         return self.topProcesses[id].getMaxProcessorPct()
                 return None
 
@@ -443,7 +443,7 @@ class Dispatcher:
                 # Modifies: nothing
                 # Throws: nothing
 
-                if self.topProcesses.has_key(id):
+                if id in self.topProcesses:
                         return self.topProcesses[id].getAverageProcessorPct()
                 return None
 
@@ -632,9 +632,9 @@ if __name__ == '__main__':
         # do reporting on those commands issued through the 8-way Dispatcher
 
         for id in ids:
-                print 'Stdout for command %d' % id
-                print d8.getStdout (id)
-                print 'Stderr for command %d' % id
-                print d8.getStderr (id)
-                print 'Return code for command %d' % id
-                print d8.getReturnCode (id)
+                print('Stdout for command %d' % id)
+                print(d8.getStdout (id))
+                print('Stderr for command %d' % id)
+                print(d8.getStderr (id))
+                print('Return code for command %d' % id)
+                print(d8.getReturnCode (id))

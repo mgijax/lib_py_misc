@@ -205,7 +205,7 @@ class TableDataSet:
         newds = TableDataSet(name, self.getFieldNames())
 
         if rcdKeys == None:
-            rcdKeys = self.records.keys()
+            rcdKeys = list(self.records.keys())
 
         for rcdKey in rcdKeys:
             rcd = self.records[rcdKey]
@@ -244,7 +244,7 @@ class TableDataSet:
         
         key = self.newKey()     # get a new key
         for f in self.getFieldNames():  # make sure rcd has all needed fields
-            if not rcd.has_key(f):
+            if f not in rcd:
                 rcd[f] = None
         rcd['_rcdkey'] = key    # add key as an attr
         self.records[key] = rcd
@@ -258,11 +258,11 @@ class TableDataSet:
         ):
     # Purpose: delete the records specified by keys
         
-        if type(keys) != types.ListType:
+        if type(keys) != list:
             keys = [keys]
 
         for key in keys:
-            if self.records.has_key( key):
+            if key in self.records:
                 self.updateIndexesForDeletedRecord(key)
                 del self.records[key]
     # end deleteRecords() ----------------------------------
@@ -328,7 +328,7 @@ class TableDataSet:
         # if we have an index on fieldName and value != None, use index
         # otherwise, scan all records
 
-        if self.indexes.has_key(fieldName) and value != None:
+        if fieldName in self.indexes and value != None:
             return self.getKeysByIndex(fieldName, value, sortField, cmpFunc)
         else:
             keys = []           # list of keys whose rcd matches
@@ -367,13 +367,13 @@ class TableDataSet:
 
         # short circuit the simple case, no keys given, no sortField
         if keys == None and sortField == None:
-            return self.records.values()
+            return list(self.records.values())
         # short circuit simple case: just an individual key given
-        if keys != None and type(keys) != types.ListType:
+        if keys != None and type(keys) != list:
             return [self.records[keys]]
 
         if keys == None:        # no key list specfied
-            keys = self.records.keys()  # return all records
+            keys = list(self.records.keys())  # return all records
         
         keys = self.sortKeys(keys, sortField, cmpFunc)
 
@@ -420,7 +420,7 @@ class TableDataSet:
     # Throws : 
         indexValue = self.getIndexValue( inputValue)
 
-        if self.indexes[ fieldname].has_key( indexValue):       # have the key
+        if indexValue in self.indexes[ fieldname]:       # have the key
             return self.sortKeys( self.indexes[ fieldname][indexValue][:], \
                                   sortField, cmpFunc)
         else:
@@ -472,7 +472,7 @@ class TableDataSet:
     #          until it finds fields < or > (and returns that),
     #          or if all fields compare ==, returns ==.
 
-        if type(self.sortField) != types.ListType:      # convert to lists
+        if type(self.sortField) != list:      # convert to lists
             sortFieldList = [self.sortField]
             cmpFuncList   = [self.cmpFunc]
         else:
@@ -532,12 +532,12 @@ class TableDataSet:
 
         # set fields to the list of fieldnames to add indexes for
         fields = fieldnames
-        if type(fieldnames) != types.ListType:
+        if type(fieldnames) != list:
             fields = [fieldnames]
 
         for fn in fields:
             self.indexes[fn] = {}
-            for key in self.records.keys():
+            for key in list(self.records.keys()):
                 self.updateIndexForNewRecord( fn,key)
     # end addIndexes() ----------------------------------
     
@@ -547,7 +547,7 @@ class TableDataSet:
     # Purpose: return 1 if we have an index for the specified fieldname
     # Returns:  0 otherwise
 
-        return fieldname in self.indexes.keys()
+        return fieldname in list(self.indexes.keys())
     
     # end hasIndex() ------------------------------------------
 
@@ -573,7 +573,7 @@ class TableDataSet:
         key
         ):
     # Purpose:  update all existing indexes for the specified record key
-        for fn in self.indexes.keys():
+        for fn in list(self.indexes.keys()):
             self.updateIndexForNewRecord( fn,key)
     # end updateIndexesForNewRecord() ----------------------------------
 
@@ -602,7 +602,7 @@ class TableDataSet:
 
             if val != None:     # we don't index "None" as a value
                 value = self.getIndexValue( val)
-                if self.indexes[fieldname].has_key( value):
+                if value in self.indexes[fieldname]:
                     # add key to list
                     self.indexes[fieldname][value].append( key)
                 else:
@@ -619,7 +619,7 @@ class TableDataSet:
     # Assumes: key is still a valid key (i.e., rcd has not been deleted yet)
 
 
-        for fn in self.indexes.keys():
+        for fn in list(self.indexes.keys()):
             rcd = self.records[key]
             self.updateIndexForDeletedRecord( fn, key, rcd[fn])
     # end updateIndexesForDeletedRecord() ----------------------------------
@@ -646,7 +646,7 @@ class TableDataSet:
         for val in values:
             if val != None:
                 value = self.getIndexValue( val)
-                if self.indexes[fieldname].has_key( value):
+                if value in self.indexes[fieldname]:
                     self.indexes[fieldname][value].remove( key)
                     if len(self.indexes[fieldname][value]) == 0: #last one
                         del self.indexes[fieldname][value]
@@ -668,7 +668,7 @@ class TableDataSet:
     #          For each field that is multiValued, the corresponding value is
     #           a list of values.
     # Effects: see Purpose
-        if type(fieldNames) == types.StringType:
+        if type(fieldNames) == bytes:
             fieldNames = [fieldNames]
             values     = [values]
 
@@ -680,7 +680,7 @@ class TableDataSet:
 
             rcd[fieldName] = newValue   # set new value for the field
 
-            if fieldName in self.indexes.keys():        # field is indexed
+            if fieldName in list(self.indexes.keys()):        # field is indexed
                 # first remove index entry for oldValue
                 self.updateIndexForDeletedRecord( fieldName, key, oldValue)
 
@@ -711,7 +711,7 @@ class TableDataSet:
 
         keys = []
         dups = self.getDupsDict( [fieldname])
-        for value in dups[fieldname].keys():
+        for value in list(dups[fieldname].keys()):
             if omitFirst:
                 keys = keys + dups[fieldname][value][1:]
             else:
@@ -731,7 +731,7 @@ class TableDataSet:
         finaldict = {}
         for fn in fieldnames:
             finaldict[fn] = {}
-            for value in self.indexes[fn].keys():
+            for value in list(self.indexes[fn].keys()):
                 if len( self.indexes[fn][value]) > 1:
                     finaldict[fn][value] = self.indexes[fn][value][:]
 
@@ -774,7 +774,7 @@ class TableDataSet:
 
                 fn = fieldnames[i]
                 if self.isMultiValued( fn):
-                    values = map(str, rcd[fn]) # convert all values to strings
+                    values = list(map(str, rcd[fn])) # convert all values to strings
                     value = string.join( values, self.multiValuedFields[fn])
                 else:   # single valued field
                     value = rcd[fn]
@@ -816,12 +816,12 @@ class TableDataSet:
     # Purpose: return the list of distinct values for 'fieldname' in this
     #          TableDataSet
     # Assumes: there is an index for 'fieldname'
-        return self.indexes[fieldname].keys()
+        return list(self.indexes[fieldname].keys())
     # end getValues() ----------------------------------
 
     def getKeys (self):
     # Purpose: return the list of rcd keys in this TableDataSet
-        return self.records.keys()
+        return list(self.records.keys())
     # end getKeys() ----------------------------------
 
     def getFieldNames (self):
@@ -833,7 +833,7 @@ class TableDataSet:
                        fieldname
         ):
     # Purpose: return true if the fielnameis multiValued, false otherwise
-        return self.multiValuedFields.has_key( fieldname)
+        return fieldname in self.multiValuedFields
     # end isMultiValued() ----------------------------------
     
     def getName (self):
@@ -1088,7 +1088,7 @@ class TextFileTableDataSet (TableDataSet):
 
         fieldvalues = string.split( line, self.fieldDelim)
         if DEBUG:
-            print fieldvalues
+            print(fieldvalues)
 
         while len(fieldvalues[-1]) != 0 and ( \
                 fieldvalues[-1][-1] == "\n" or fieldvalues[-1][-1] == "\r"):
@@ -1339,7 +1339,7 @@ class TableDataSetBucketizer:
     #      n:1 and n:m buckets.
     # Returns: nothing
 
-        for bi in self.bucketItems.values():
+        for bi in list(self.bucketItems.values()):
             bt = bi.getBucketType()
 
             if   bt == "1:0":
@@ -1505,7 +1505,7 @@ class TableDataSetBucketizer:
         # add all the new fields
         newFields = [newBkTypeField] + newOtherCohortsFlds + newThisCohortsFlds
         for f in newFields:
-            if multiValued.has_key(f):
+            if f in multiValued:
                 ds.addField(f, [], multiValued[f])
             else:
                 ds.addField(f, None)
@@ -1654,9 +1654,9 @@ class BucketItem:
     # Throws : %%
 
         if self != biToMerge:   # is this how you test for object inequality?
-            for r in biToMerge.ds1Nodes.keys():
+            for r in list(biToMerge.ds1Nodes.keys()):
                 self.ds1Nodes[r] = 1
-            for r in biToMerge.ds2Nodes.keys():
+            for r in list(biToMerge.ds2Nodes.keys()):
                 self.ds2Nodes[r] = 1
         return self
 
@@ -1666,14 +1666,14 @@ class BucketItem:
     # Purpose: return the list of nodes from ds1 in this BucketItem
     # Returns: list of nodes
 
-        return self.ds1Nodes.keys()
+        return list(self.ds1Nodes.keys())
     # end getDs1Nodes() ----------------------------------
     
     def getDs2Nodes (self):
     # Purpose: return the list of nodes from ds2 in this BucketItem
     # Returns: list of nodes
 
-        return self.ds2Nodes.keys()
+        return list(self.ds2Nodes.keys())
     # end getDs2Nodes() ----------------------------------
     
     def getBucketType (self):
@@ -1704,7 +1704,7 @@ class BucketItem:
 
     def printBI(self):
     # Purpose: print the BucketItem (for debugging purposes)
-        print self.ds1Nodes.keys(), self.ds2Nodes.keys()
+        print(list(self.ds1Nodes.keys()), list(self.ds2Nodes.keys()))
     # end printBI() --------------------------------------
     
 # End class BucketItem ------------------------------------------------------

@@ -343,13 +343,13 @@ class TableTool:
             self.t2.open(file)
 
     def setOutputFile(self, file):
-        if type(file) is types.StringType:
+        if type(file) is bytes:
             self.ofd = open( file, 'w' )
         else:
             self.ofd = file
 
     def setLogFile(self, file):
-        if type(file) is types.StringType:
+        if type(file) is bytes:
             self.lfd = open( file, 'a' )
         else:
             self.lfd = file
@@ -408,10 +408,10 @@ class TableTool:
     # integers parsed from the string.
     #
     def parseIntList(self, val):
-        if type(val) is types.ListType:
+        if type(val) is list:
             val = string.join(val, ",")
         val=re.split("[, ]+", val)
-        return map(int, filter(None,val))
+        return list(map(int, [_f for _f in val if _f]))
 
     #---------------------------------------------------------
     # Evaluates the list of functions to generate zero
@@ -445,9 +445,9 @@ class TableTool:
                     return None
 
             # generate output column(s)
-            if type(x) is types.ListType:
+            if type(x) is list:
                 outrow = outrow + x
-            elif type(x) is types.TupleType:
+            elif type(x) is tuple:
                 outrow = outrow + list(x)
             else:
                 outrow.append(x)
@@ -463,7 +463,7 @@ class TableTool:
             fd = self.ofd
         if fd is self.ofd:
             self.nOutputRows += 1
-        fd.write(string.join(map(str,row),TAB))
+        fd.write(string.join(list(map(str,row)),TAB))
         fd.write(NL)
 
 #------------------------------------------------------------
@@ -566,7 +566,7 @@ class TableFileIterator:
     def open(self, file):
         self.close()
 
-        if type(file) is types.StringType:
+        if type(file) is bytes:
             if file == "-":
                 self.fileName = "<stdin>"
                 self.fileDesc = sys.stdin
@@ -717,7 +717,7 @@ class TableFileIterator:
     #--------------------------------------------------
     # Returns next row, or throws StopIteration.
     #
-    def next(self):
+    def __next__(self):
         r = self.nextRow()
         if r is None:
             raise StopIteration
@@ -937,7 +937,7 @@ class TAggregate( UnaryTableTool) :
 
         accClass = _FUNC2CLASS[func]
         if accClass is Statistics:
-            if not self.col2stats.has_key(colIndex):
+            if colIndex not in self.col2stats:
                 self.col2stats[colIndex] = len(self.accumulatorClasses)
                 self.accumulatorClasses.append(Statistics)
                 self.accumulatorColumns.append(colIndex)
@@ -974,7 +974,7 @@ class TAggregate( UnaryTableTool) :
     #
     def processRow(self, row):
         gbkey = self.makeKey(row,self.gbColumns)
-        if not self.partitions.has_key(gbkey):
+        if gbkey not in self.partitions:
             self.partitions[gbkey]=self.newAccumulatorList()
         for a in self.partitions[gbkey]:
             a.nextRow(row)
@@ -983,7 +983,7 @@ class TAggregate( UnaryTableTool) :
     def go(self):
         self.readInput()
         rownum=0
-        for (part,aggs) in self.partitions.items():
+        for (part,aggs) in list(self.partitions.items()):
             rownum += 1
             aggrow = [rownum] + list(part)
             for (i,arg,xtra) in self.outSpecifiers:
@@ -1022,10 +1022,10 @@ class Accumulator:
             self.nextValue(row[self.colIndex])
 
     def nextValue(self, value):
-        raise "UnimplementedAbstractMethod: nextValue", self
+        raise Exception("UnimplementedAbstractMethod: nextValue")
 
     def getResult(self,arg=None):
-        raise "UnimplementedAbstractMethod: nextResult", self
+        raise Exception("UnimplementedAbstractMethod: nextResult")
 
     def __str__(self):
         return str(self.getResult())
@@ -1096,7 +1096,7 @@ class Concatenator( Accumulator ):
 
     def __str__(self):
         return self.prefix + \
-            string.join( map(str,self.list), self.separator) + \
+            string.join( list(map(str,self.list)), self.separator) + \
             self.suffix
 
 
@@ -1394,7 +1394,7 @@ class BipartiteGraph:
         self.nodes = {}
 
     def __getneighbors__(self, n, dict):
-        if dict.has_key(n):
+        if n in dict:
             lst = dict[n]
         else:
             lst = []
@@ -1443,7 +1443,7 @@ class CCA:
         self.cc[n] = n
         neighbors = self.graph.nodes[n]
         for n2 in neighbors:
-            if not self.visited.has_key(n2):
+            if n2 not in self.visited:
                 self.reach(n2)
 
     def getCount(self, n):
@@ -1458,14 +1458,14 @@ class CCA:
         return str(self.na) + "-" + str(self.nb)
 
     def go(self):
-        for n in self.graph.nodes.iterkeys():
-            if not self.visited.has_key( n ):
+        for n in self.graph.nodes.keys():
+            if n not in self.visited:
                 self.cc = {}
                 self.na = 0
                 self.nb = 0
                 self.cid += 1
                 self.reach(n) 
-                for cn in self.cc.iterkeys():
+                for cn in self.cc.keys():
                     self.visited[cn] = (self.visited[cn], self.getBucket())
 
 #------------------------------------------------------------
@@ -1610,7 +1610,7 @@ class TDifference (TDiffIntUnion):
         row = self.t1.nextRow()
         while(row):
             key = self.makeKey(row, self.kcols1)
-            if not keys.has_key(key):
+            if key not in keys:
                 self.output(row)
             row = self.t1.nextRow()
 
@@ -1754,7 +1754,7 @@ class TIntersection (TDiffIntUnion):
         row = self.t1.nextRow()
         while(row):
             key = self.makeKey(row, self.kcols1)
-            if keys.has_key(key):
+            if key in keys:
                 self.output(row)
             row = self.t1.nextRow()
 
@@ -1935,7 +1935,7 @@ class TJoin( BinaryTableTool ):
         row = self.t2.nextRow()
         while(row):
             key = self.makeKey(row, self.jcols2)
-            if not self.inner.has_key(key):
+            if key not in self.inner:
                 self.inner[key] = [row]
             else:
                 self.inner[key].append(row)
@@ -1948,7 +1948,7 @@ class TJoin( BinaryTableTool ):
     #---------------------------------------------------------
     def scanOuter(self):
         if self.selfJoin:
-            for rowlist in self.inner.itervalues():
+            for rowlist in self.inner.values():
                 for outerrow in rowlist:
                     for innerrow in rowlist:
                         self.processPair(outerrow,innerrow)
@@ -1956,7 +1956,7 @@ class TJoin( BinaryTableTool ):
             outerrow = self.t1.nextRow()
             while outerrow is not None:
                 key = self.makeKey(outerrow, self.jcols1)
-                if self.inner.has_key(key):
+                if key in self.inner:
                     innerList = self.inner[key]
                     for innerrow in innerList:
                         self.processPair(outerrow,innerrow)
@@ -1966,7 +1966,7 @@ class TJoin( BinaryTableTool ):
                     self.processPair(outerrow, None)
                 outerrow = self.t1.nextRow()
             if self.doRightOuter:
-                unseen = filter(lambda x: x is not None, self.innerList)
+                unseen = [x for x in self.innerList if x is not None]
                 for r in unseen:
                     self.processPair(None, r)
 
@@ -2029,7 +2029,7 @@ class TPartition( UnaryTableTool ):
         fname = self.getOutputFileName(pval)
         if fname == "-":
             fd = sys.stdout
-        elif self.fname2ofd.has_key(fname):
+        elif fname in self.fname2ofd:
             fd = self.fname2ofd[fname]
         else:
             fd = open(fname, 'w')
@@ -2052,7 +2052,7 @@ class TPartition( UnaryTableTool ):
         while r:
             self.processRow(r)
             r = self.t1.nextRow()
-        for fd in self.fname2ofd.values():
+        for fd in list(self.fname2ofd.values()):
             fd.close()
 
 #----------------------------------------------------------------------
@@ -2166,7 +2166,7 @@ class TUnion (TDiffIntUnion):
         row = self.t2.nextRow()
         while(row):
             key = self.makeKey(row, self.kcols2)
-            if not keys.has_key(key):
+            if key not in keys:
                 self.output(row)
             row = self.t2.nextRow()
 
@@ -2256,7 +2256,7 @@ class TXpand ( UnaryTableTool ) :
     # 
     #
     def expandValue(self, value, prefix, sep, suffix, conv=None):
-        if type(value) is not types.StringType:
+        if type(value) is not bytes:
             return None
 
         a=len(prefix)
@@ -2264,12 +2264,12 @@ class TXpand ( UnaryTableTool ) :
 
         valPrefix = value[0:a]
         if valPrefix != prefix:
-            raise "SyntaxError"
+            raise Exception("SyntaxError")
         valSuffix = value[b:]
         if valSuffix != suffix:
-            raise "SyntaxError"
+            raise Exception("SyntaxError")
 
-        valItems = map(conv, re.split(sep, value[a:b]))
+        valItems = list(map(conv, re.split(sep, value[a:b])))
         return valItems
 
     #---------------------------------------------------------
@@ -2366,18 +2366,18 @@ def interpretCommandLine(args):
         opClass = None
         if len(args) == 0:
             pass
-        elif OPERATION_MAP.has_key(args[0]):
+        elif args[0] in OPERATION_MAP:
             op = args[0]
             opClass = OPERATION_MAP[op]
             args = args[1:]
         elif len(args) == 1:
             pass
-        elif OPERATION_MAP.has_key(args[1]):
+        elif args[1] in OPERATION_MAP:
             op = args[1]
             opClass = OPERATION_MAP[op]
             args = args[2:]
         elif args[1] in ["-h", "--help"]:
-            print HELPTEXT
+            print(HELPTEXT)
             sys.exit(-1)
 
         if opClass is None:

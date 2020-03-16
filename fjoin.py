@@ -326,7 +326,7 @@ class FJoin:
             self.parser.error("-s argument must be '1', '2', or 'both'.")
 
         if self.options.gnuSort is None:
-            if os.environ.has_key("GNUSORT"):
+            if "GNUSORT" in os.environ:
                 self.options.gnuSort = os.environ["GNUSORT"]
             else:
                 self.options.sortInternal = True
@@ -389,20 +389,20 @@ class FJoin:
         the lagging stream, and scan the opposite window.
         Returns number of overlapping pairs output.
         """
-        x = self.xStream.next()
-        y = self.yStream.next()
+        x = next(self.xStream)
+        y = next(self.yStream)
         while x is not self.xStream.sentinel \
         or  y is not self.yStream.sentinel:
             if x.start < y.start:
                 self.lastPick = 0
                 self.scan(x, self.getWindow(x, self.key2Wx), 
                           y, self.getWindow(x, self.key2Wy))
-                x = self.xStream.next()
+                x = next(self.xStream)
             else:
                 self.lastPick = 1
                 self.scan(y, self.getWindow(y, self.key2Wy),
                           x, self.getWindow(y, self.key2Wx)) 
-                y = self.yStream.next()
+                y = next(self.yStream)
 
         self.finishStats()
         return self.nOutputRows
@@ -513,7 +513,7 @@ class FJoin:
         """Prints the version number and exits.
         """
         vers = self.getVersion()
-        print vers
+        print(vers)
         sys.exit(0)
 
     #-------------------------------------
@@ -522,7 +522,7 @@ class FJoin:
             return GFFCOLMAP
 
         colMap = {}
-        cols = map(int, colsArg.split(COMMA))
+        cols = list(map(int, colsArg.split(COMMA)))
         if len(cols) == 2:
             colMap['start']      = cols[0] - 1
             colMap['end']        = cols[1] - 1
@@ -549,7 +549,7 @@ class FJoin:
         under this key.
         """
         key = self.makeFKey(f)
-        if not dict.has_key(key):
+        if key not in dict:
             w = DLL()
             dict[key] = w
         else:
@@ -744,7 +744,7 @@ class FJoinStream:
             return Feature(row, self.continuous, self.columnMap)
 
     #-------------------------------------
-    def next(self):
+    def __next__(self):
         """Advances the stream to the next row and returns it
         as a feature object. If the associated file has reached
         EOF, return the sentinel object.
@@ -761,9 +761,9 @@ class FJoinStream:
         if self.currentPos is None or self.currentPos <= f.start:
             self.currentPos = f.start
         else:
-            raise SORT_ERROR, "Inversion (" + str(self.currentPos) + " > " + str(f.start) + ") detected at line " \
+            raise SORT_ERROR("Inversion (" + str(self.currentPos) + " > " + str(f.start) + ") detected at line " \
                 + str(self.currentLineNum) \
-                + " of input " + self.fname
+                + " of input " + self.fname)
         return f
 
 #------------------------------------------------------------
@@ -784,12 +784,12 @@ class Feature:
         and 'strand' are optional.
         """
         self.row = row
-        if columnMap.has_key('chromosome'):
+        if 'chromosome' in columnMap:
             self.chromosome = row[columnMap['chromosome']]
         else:
             self.chromosome = '*'
 
-        if columnMap.has_key('strand'):
+        if 'strand' in columnMap:
             self.strand     = row[columnMap['strand']]
         else:
             self.strand     = '*'
@@ -886,28 +886,28 @@ class DLLIter:
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         """Returns list item value under the cursor and advances the cursor."""
         if self.p is None:
             raise StopIteration
         self.lastp = self.p
-        self.p = self.p.next
+        self.p = self.p.__next__
         return self.lastp.data
 
     def remove(self):
         """Removes from list the last item returned."""
         p = self.lastp
         if p is None:
-            raise "Error", "Nothing to remove."
+            raise Exception("Nothing to remove.")
         self.lastp = None # prevent repeated removals
 
         if p is self.dll.first:
-            self.dll.first = p.next
+            self.dll.first = p.__next__
         if p is self.dll.last:
             self.dll.last = p.prev
         if p.prev is not None:
-            p.prev.next = p.next
-        if p.next is not None:
+            p.prev.next = p.__next__
+        if p.__next__ is not None:
             p.next.prev = p.prev
         self.dll.n -= 1
 
