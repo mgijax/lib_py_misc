@@ -84,259 +84,259 @@ def mkdirs(path,                        # string, the path to make
         return head
 
 def olddebug(object):
-	sys.stderr.write(
-		os.path.basename(sys.argv[0]) + ': ' + str(object) + '\n' 
-		)
+        sys.stderr.write(
+                os.path.basename(sys.argv[0]) + ': ' + str(object) + '\n' 
+                )
 
 
 def AlarmClock(sig, stack):
-	olddebug('TIMED OUT, environ = ' + str(os.environ))
-	errors(None, 'time_out')
-	os._exit(-1)
+        olddebug('TIMED OUT, environ = ' + str(os.environ))
+        errors(None, 'time_out')
+        os._exit(-1)
 
 
 def show_count(obj):
-	"""Returns a string indicating number of matching items.
-	#
-	# Requires:
-	#	obj - An integer or any object that has a __len__ method.
-	#
-	# Note:
-	#	Used in summary and detail screens.
-	"""
-	if type(obj) is types.IntType:
-		count = obj
-	else:
-		try:
-			count = len(obj)
-		except:
-			count = 0
+        """Returns a string indicating number of matching items.
+        #
+        # Requires:
+        #       obj - An integer or any object that has a __len__ method.
+        #
+        # Note:
+        #       Used in summary and detail screens.
+        """
+        if type(obj) is types.IntType:
+                count = obj
+        else:
+                try:
+                        count = len(obj)
+                except:
+                        count = 0
 
-	s = '%d matching item' % count
-	# Add an 's' on to the end when necessary.
-	if count != 1: s = s + 's'
+        s = '%d matching item' % count
+        # Add an 's' on to the end when necessary.
+        if count != 1: s = s + 's'
 
-	# TR136 change:
-	if count != 0:
-		s = s + ' displayed'
+        # TR136 change:
+        if count != 0:
+                s = s + ' displayed'
 
-	return s
+        return s
 
 
 def plural(n, singular, plural=None):
-	'''
-	# INPUTS:  n - integer. 
-	#	   singular, plural - string
-	# RETURNS: string
-	# EXCEPTIONS: none
-	# ASSUMES: input parameters are of expected type
-	# MODIFIES: nothing
-	# EFFECTS: none
-	# COMMENTS: Returns a string that is in the plural form
-	#  or the singular form depending on the value of n.
-	#  e.g. we would want to write "1 assay" instead of "1 assays"
-	'''	
+        '''
+        # INPUTS:  n - integer. 
+        #          singular, plural - string
+        # RETURNS: string
+        # EXCEPTIONS: none
+        # ASSUMES: input parameters are of expected type
+        # MODIFIES: nothing
+        # EFFECTS: none
+        # COMMENTS: Returns a string that is in the plural form
+        #  or the singular form depending on the value of n.
+        #  e.g. we would want to write "1 assay" instead of "1 assays"
+        '''     
 
-	if plural is None:
-		plural = singular + 's'
-	if n == 1:
-		str = singular
-	else:
-		str = plural
-	return 	str
+        if plural is None:
+                plural = singular + 's'
+        if n == 1:
+                str = singular
+        else:
+                str = plural
+        return  str
 
 
 def pc(count):
-	"""Prints a string indicating number of matching items.
-	#
-	# Note:
-	# 	This function is here only for backward compatability.  Do not
-	#	use for any new software.  Use showcount() instead.
-	"""
+        """Prints a string indicating number of matching items.
+        #
+        # Note:
+        #       This function is here only for backward compatability.  Do not
+        #       use for any new software.  Use showcount() instead.
+        """
 
-	print show_count(count)
+        print show_count(count)
 
 
 def vali_date(date):
 #
-#	Validates that a date is separated into 3 parts by '/'.
-#	Couldn't care less what is actually between those '/'s.
-#	
-	#
-	#	Split on 'and' first in case from a field doing a between.
-	#
-	dates = string.splitfields(string.lower(date),'and')
-	for index in range(len(dates)):
-		date_parts = string.splitfields(dates[index],'/')
-		if len(date_parts) != 3:
-			return(0)
-	#
-	#	Return 'true'(1) if everything ok.
-	#
-	return(1)
+#       Validates that a date is separated into 3 parts by '/'.
+#       Couldn't care less what is actually between those '/'s.
+#       
+        #
+        #       Split on 'and' first in case from a field doing a between.
+        #
+        dates = string.splitfields(string.lower(date),'and')
+        for index in range(len(dates)):
+                date_parts = string.splitfields(dates[index],'/')
+                if len(date_parts) != 3:
+                        return(0)
+        #
+        #       Return 'true'(1) if everything ok.
+        #
+        return(1)
 
 
 def sepa_date(date):
 #
-#	Separates dates that have been connected by 'and' (ie. between
-#	m1/d1/y1 and m2/d2/y2).  Also strips off any leading or trailing
-#	blanks.
+#       Separates dates that have been connected by 'and' (ie. between
+#       m1/d1/y1 and m2/d2/y2).  Also strips off any leading or trailing
+#       blanks.
 #
-	dates = string.splitfields(string.lower(date),'and')
-	for i in range(len(dates)):
-		dates[i] = string.strip(dates[i])
-	return(dates)
+        dates = string.splitfields(string.lower(date),'and')
+        for i in range(len(dates)):
+                dates[i] = string.strip(dates[i])
+        return(dates)
 
 
 def formu_date(field_name, operator, date):
 #
-#	Formulates where clause portion for query by date.
-#	Requires the name of the fields in the database being compared to,
-#	including (ie m.modification_date, for a table with defined alias m)
-#	Also requires the operator being used, and the date (date must be
-#	in format: m1/d1/y1 and m2/d2/y2 if using between operator)
+#       Formulates where clause portion for query by date.
+#       Requires the name of the fields in the database being compared to,
+#       including (ie m.modification_date, for a table with defined alias m)
+#       Also requires the operator being used, and the date (date must be
+#       in format: m1/d1/y1 and m2/d2/y2 if using between operator)
 #
 
-	comparison = 'convert(datetime, convert(char(12),' + field_name + ',1))'
+        comparison = 'convert(datetime, convert(char(12),' + field_name + ',1))'
 
-	if string.lower(operator) == 'between':
-		dates = sepa_date(date)
-		if len(dates) != 2:
-			return None	
-		date = '"' + dates[0] + '"' + ' ' + 'and' + ' ' + '"' \
-			+ dates[1] + '"'
-	else:
-		date = '"' + string.strip(date) + '"'
+        if string.lower(operator) == 'between':
+                dates = sepa_date(date)
+                if len(dates) != 2:
+                        return None     
+                date = '"' + dates[0] + '"' + ' ' + 'and' + ' ' + '"' \
+                        + dates[1] + '"'
+        else:
+                date = '"' + string.strip(date) + '"'
 
-	comparison = comparison + ' ' + operator + ' ' + date
-	return(comparison)
+        comparison = comparison + ' ' + operator + ' ' + date
+        return(comparison)
 
 
 class Tee:
-	"""A file-like object that behaves like the Unix 'tee' command.
-	#
-	# This class allows yo to create a "file-like" object with multiple
-	# file descriptors for logging purposes.  Just as the 'tee' command, 
-	# this also writes to sys.stderr.
-	#
-	# Note:
-	#	Make sure you use the close() method before your program exits.
-	#	If you do not use the close() method, the buffer might not be
-	#	flushed.
-	#
-	# Example (Writes to sys.stderr and 'junk.log'):
-	#
-	#	#!./python
-	#
-	#	from mgi_utils import Tee
-	#
-	#	tee = Tee('junk.log')
-	#	tee.write('Here's some junk.\n')
-	#	tee.write('Here's some more junk.\n')
-	#	tee.close()
-	#
-	# Example (Logs sql to sys.stderr and 'junk.log'):
-	#
-	#	#!./python
-	#
-	#	
-	#   import mgi_utils
-	#
-	#	tee = mgi_utils.Tee('junk.log')
-	#	db.set_sqlLogFD(tee)
-	#	results = db.sql('select count(*) from MRK_Marker',	'auto')
-	#	tee.write('%s row(s) returned.\n' % len(results))
-	#	tee.close()
-	#
-	# Implementor's note:
-	#	One obvious thing this *should* do is close files automatically
-	#	in the destructor (__del__).  Unfortunately, Python seems to
-	#	have strange behaviour in the destructor and we cannot count on
-	#	it getting called properly.
-	#
-	"""
+        """A file-like object that behaves like the Unix 'tee' command.
+        #
+        # This class allows yo to create a "file-like" object with multiple
+        # file descriptors for logging purposes.  Just as the 'tee' command, 
+        # this also writes to sys.stderr.
+        #
+        # Note:
+        #       Make sure you use the close() method before your program exits.
+        #       If you do not use the close() method, the buffer might not be
+        #       flushed.
+        #
+        # Example (Writes to sys.stderr and 'junk.log'):
+        #
+        #       #!./python
+        #
+        #       from mgi_utils import Tee
+        #
+        #       tee = Tee('junk.log')
+        #       tee.write('Here's some junk.\n')
+        #       tee.write('Here's some more junk.\n')
+        #       tee.close()
+        #
+        # Example (Logs sql to sys.stderr and 'junk.log'):
+        #
+        #       #!./python
+        #
+        #       
+        #   import mgi_utils
+        #
+        #       tee = mgi_utils.Tee('junk.log')
+        #       db.set_sqlLogFD(tee)
+        #       results = db.sql('select count(*) from MRK_Marker',     'auto')
+        #       tee.write('%s row(s) returned.\n' % len(results))
+        #       tee.close()
+        #
+        # Implementor's note:
+        #       One obvious thing this *should* do is close files automatically
+        #       in the destructor (__del__).  Unfortunately, Python seems to
+        #       have strange behaviour in the destructor and we cannot count on
+        #       it getting called properly.
+        #
+        """
 
-	def __init__(self, path, mode='w'):
-		"""Construct a Tee object.
-		#
-		# Requires:
-		#	path -- A string representing the file path.
-		#	mode -- 'w' or 'a'.  The default ('w') is to write over
-		#		the file if it already exists.  Append ('a')
-		#		mode adds the output to the end of the file.
-		"""
-		self.fd = open(path, mode)
+        def __init__(self, path, mode='w'):
+                """Construct a Tee object.
+                #
+                # Requires:
+                #       path -- A string representing the file path.
+                #       mode -- 'w' or 'a'.  The default ('w') is to write over
+                #               the file if it already exists.  Append ('a')
+                #               mode adds the output to the end of the file.
+                """
+                self.fd = open(path, mode)
 
-	def write(self, s):
-		"""Writes a string (s).
-		#
-		# Requires:
-		#	s -- A string.
-		#
-		"""
-		# Always write to sys.stderr.
-		sys.stderr.write(s)
+        def write(self, s):
+                """Writes a string (s).
+                #
+                # Requires:
+                #       s -- A string.
+                #
+                """
+                # Always write to sys.stderr.
+                sys.stderr.write(s)
 
-		if self.fd is not sys.stderr:
-			self.fd.write(s)
+                if self.fd is not sys.stderr:
+                        self.fd.write(s)
 
-	def close(self):
-		"""Closes file unless it is a tty(-like) device."""
-		if not self.fd.isatty():
-			self.fd.close()
+        def close(self):
+                """Closes file unless it is a tty(-like) device."""
+                if not self.fd.isatty():
+                        self.fd.close()
 
 
 def value(object):
-	if object is None:
-		return 'null'
-	else:
-		return str(object)
+        if object is None:
+                return 'null'
+        else:
+                return str(object)
 
 
 def strval(object):
-	if object is None:
-		return 'null'
-	else:
-		return '"' + str(object) + '"'
+        if object is None:
+                return 'null'
+        else:
+                return '"' + str(object) + '"'
 
 
 def prstar(object):
-	if object is None:
-		return '*'
-	else:
-		return str(object)
+        if object is None:
+                return '*'
+        else:
+                return str(object)
 
 
 def prvalue(object):
-	if object is None:
-		return ''
-	else:
-		return str(object)
+        if object is None:
+                return ''
+        else:
+                return str(object)
 
 
 def date( format = '%c' ):
-	"""Returns the current date and time in a nice format.
-	#
-	# Requires:
-	#	format - an optional string of arguments (see man strftime(3)
-	#		for instructions).  The default is '%c' (normal format).
-	#
-	# Example:
-	#
-	#	Here's how to print the current month:
-	#
-	#		print mgi_utils.date( '%B' )
-	#
-	# Hint:
-	#	You can put other characters in the format string, as in
-	#
-	#		print mgi_utils.date( '<STRONG>%m/%d/%y</STRONG>' )
-	"""
-	try:
-		s = time.strftime( format, time.localtime(time.time()) )
-	except:
-		s = 'Error:  mgi_utils.date( ' + str(format) + ' )'
-	return s
+        """Returns the current date and time in a nice format.
+        #
+        # Requires:
+        #       format - an optional string of arguments (see man strftime(3)
+        #               for instructions).  The default is '%c' (normal format).
+        #
+        # Example:
+        #
+        #       Here's how to print the current month:
+        #
+        #               print mgi_utils.date( '%B' )
+        #
+        # Hint:
+        #       You can put other characters in the format string, as in
+        #
+        #               print mgi_utils.date( '<STRONG>%m/%d/%y</STRONG>' )
+        """
+        try:
+                s = time.strftime( format, time.localtime(time.time()) )
+        except:
+                s = 'Error:  mgi_utils.date( ' + str(format) + ' )'
+        return s
 
 
 # aliases
@@ -344,32 +344,32 @@ byFilename = symbolsort.nomenCompare
 bySymbol = symbolsort.nomenCompare
 
 def setAlarm(timeout, alarmclock=AlarmClock):
-	# Schedule a UNIX alarm call after timeout seconds
-	signal(SIGALRM, alarmclock)
-	alarm(timeout)
+        # Schedule a UNIX alarm call after timeout seconds
+        signal(SIGALRM, alarmclock)
+        alarm(timeout)
 
 def addQuotes (list):
-	# return a copy of list, with each element in double quotes
-	return map (lambda x : '"%s"' % x, list)
+        # return a copy of list, with each element in double quotes
+        return map (lambda x : '"%s"' % x, list)
 
 def joinPaths (*item):
-	# Purpose: join all the items passed in into one path, which we return
-	# Returns: string; see Purpose
-	# Assumes: nothing
-	# Effects: nothing
-	# Throws: nothing
-	# Notes: The same rules which apply to os.path.join() apply here.
-	#	The most interesting case is:
-	#		a = '/a/b/c'
-	#		b = '/d/e/f'
-	#		joinPaths (a, b) ==> '/d/e/f'
-	#	This is because any full path on the right causes any path on
-	#	the left to be ignored.
+        # Purpose: join all the items passed in into one path, which we return
+        # Returns: string; see Purpose
+        # Assumes: nothing
+        # Effects: nothing
+        # Throws: nothing
+        # Notes: The same rules which apply to os.path.join() apply here.
+        #       The most interesting case is:
+        #               a = '/a/b/c'
+        #               b = '/d/e/f'
+        #               joinPaths (a, b) ==> '/d/e/f'
+        #       This is because any full path on the right causes any path on
+        #       the left to be ignored.
 
-	s = ''
-	for i in item:
-		s = os.path.join (s, i)
-	return s
+        s = ''
+        for i in item:
+                s = os.path.join (s, i)
+        return s
 
 
 ###--- Template string for generating e-mail file, for send_Mail() ---###
@@ -386,71 +386,71 @@ def send_Mail (
         send_to,        # e-mail address to which to send the message
         subject,        # e-mail subject line
         message,        # text of the e-mail message
-	config = None	# dict with key 'SENDMAIL' whose value is full
-			#  pathname of the sendmail executable.
+        config = None   # dict with key 'SENDMAIL' whose value is full
+                        #  pathname of the sendmail executable.
         ):
         # Purpose: produce and send an e-mail message from 'send_from' to
-	#	'send_to' with the given 'subject' and 'message'
+        #       'send_to' with the given 'subject' and 'message'
         # Returns: integer; 0 if sent okay, non-zero return code from sendmail
-	#	if some error
+        #       if some error
         # Assumes: nothing
         # Effects: If 'config' is not None, config.get('SENDMAIL') will
-	#	be invoked to send the mail. If it is None, we default
-	#	to /usr/lib/sendmail.
+        #       be invoked to send the mail. If it is None, we default
+        #       to /usr/lib/sendmail.
         # Throws: Propogates IOError if an error occurs in sending stuff
-	#	to sendmail.
+        #       to sendmail.
 
-	# provide a default for sendmail and allow the config file to override
+        # provide a default for sendmail and allow the config file to override
 
-	sendmail = '/usr/lib/sendmail'
-	if (config != None and config.has_key('SENDMAIL')):
-		sendmail = config['SENDMAIL']
+        sendmail = '/usr/lib/sendmail'
+        if (config != None and config.has_key('SENDMAIL')):
+                sendmail = config['SENDMAIL']
 
-	# build a unique temporary filename
+        # build a unique temporary filename
 
-	tempfile.template = 'mailfile.'
-	filename = tempfile.mktemp()
+        tempfile.template = 'mailfile.'
+        filename = tempfile.mktemp()
 
-	# write the file
+        # write the file
 
-	fp = open (filename, 'w')
-	fp.write (MAIL_FILE % (send_from, send_to, subject, message))
-	fp.close()
+        fp = open (filename, 'w')
+        fp.write (MAIL_FILE % (send_from, send_to, subject, message))
+        fp.close()
 
-	# pipe the file into sendmail
+        # pipe the file into sendmail
 
-	stdout, stderr, code = runCommand.runCommand ('cat %s | %s -t' % \
-		(filename, sendmail))
+        stdout, stderr, code = runCommand.runCommand ('cat %s | %s -t' % \
+                (filename, sendmail))
 
-	# cleanup and exit with the status code
+        # cleanup and exit with the status code
 
-	os.remove (filename)
-	return code
+        os.remove (filename)
+        return code
 # end send_Mail ------------------------------------------
 
 def askUserForOneChar (
-	question,		# string; a message posing a question.
-	okAnswers = 'yn'	# string; acceptable single char answers
+        question,               # string; a message posing a question.
+        okAnswers = 'yn'        # string; acceptable single char answers
         ):
-	# Purpose: Ask user the 'question' and keep asking til
-	#	   we get a single char answer in 'okAnswers'.
-	# Returns: string: the answer or None if EOF
-	# Assumes: nothing
-	# Effects: Uses raw_input, trapping EOFError. Keeps asking til the
-	#	    user gives an "okAnswer'.
-	# Throws : nothing
+        # Purpose: Ask user the 'question' and keep asking til
+        #          we get a single char answer in 'okAnswers'.
+        # Returns: string: the answer or None if EOF
+        # Assumes: nothing
+        # Effects: Uses raw_input, trapping EOFError. Keeps asking til the
+        #           user gives an "okAnswer'.
+        # Throws : nothing
 
-	ans = ""
-	while (ans == ""):
-		try:
-			ans = raw_input( question + " [%s] " % okAnswers)
-		except EOFError :
-			ans = None
-			break
+        ans = ""
+        while (ans == ""):
+                try:
+                        ans = raw_input( question + " [%s] " % okAnswers)
+                except EOFError :
+                        ans = None
+                        break
 
-		if (len(ans) != 1 or ans not in okAnswers):
-			ans = ""
-	return ans
+                if (len(ans) != 1 or ans not in okAnswers):
+                        ans = ""
+        return ans
 # end askUserForOneChar() ----------------------------------
 
 # Warranty Disclaimer and Copyright Notice
