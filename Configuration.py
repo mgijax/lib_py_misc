@@ -68,7 +68,6 @@ import ignoreDeprecation
 import os
 import sys
 import types
-import string
 import re
 
 # if we invoked this module as a script (rather than importing it), then we
@@ -79,10 +78,6 @@ if __name__ == '__main__':
         The filetype may be csh, sh, or tab.  Output is to stdout.
         Or, this module may be imported as a Python library.
 ''' % sys.argv[0]
-
-###--- Exception-Related Global Variables ---###
-
-error = 'Configuration.error'           # exception raised by this module
 
 # exception values when 'error' is raised by this module:
 
@@ -207,14 +202,13 @@ def find_path (
         # to track down where it was found.
 
         if not script_path:
-                PATH = string.split (os.environ['PATH'], ':')
+                PATH = os.environ['PATH'].split(':')
                 for dir in PATH:
                         if os.path.exists (os.path.join (dir, script_name)):
                                 script_path = dir
                                 break
                 else:
-                        raise error('Cannot find %s in your PATH' % \
-                                script_name)
+                        raise Exception('Cannot find %s in your PATH' % script_name)
 
         pieces = []     # initial set of pieces of the path to find 's',
                         # before any clean-up takes place
@@ -223,14 +217,12 @@ def find_path (
         # current working directory...
 
         if not os.path.isabs (script_path):
-                pieces = string.split (os.getcwd(), os.sep)
+                pieces = os.getcwd().split(os.sep)
 
         # now consider the path to the script and the relative path given for
         # the config file in 's'
 
-        pieces = pieces \
-                + string.split (script_path, os.sep) \
-                + string.split (s, os.sep)
+        pieces = pieces + script_path.split(os.sep) + s.split(os.sep)
 
         # Now, go through all the 'pieces' of the path and handle any
         # '.' and '..' directories that we find.  We will build a set of
@@ -254,7 +246,7 @@ def find_path (
 
         i = len(pieces) - 1
         while i >= 0:
-                path = os.sep + string.join (pieces[:i] + filename, os.sep)
+                path = os.sep + os.sep.join(pieces[:i] + filename)
                 if os.path.exists (path):
                         return path
                 i = i - 1
@@ -299,7 +291,7 @@ class Configuration:
                 if findFile == 1:
                         filename = find_path (filename)
                         if filename is None:
-                                raise error(ERR_MISSING)
+                                raise Exception(ERR_MISSING)
 
                 # load the configuration file and proceed to parse it.
 
@@ -327,7 +319,7 @@ class Configuration:
                         elif format == 'csh':
                                 regexes = [ re_cshell1, re_cshell2 ]
                         else:
-                                raise error(ERR_UNRECOGNIZED)
+                                raise Exception(ERR_UNRECOGNIZED)
                         del lines[0]
 
                 # parse the remaining lines in the file, ignoring comments and
@@ -348,7 +340,7 @@ class Configuration:
                 # PYTHONPATH of the currently executing process:
 
                 if 'LIBDIRS' in self.options:
-                        libdirs = string.split (self['LIBDIRS'], ':')
+                        libdirs = self['LIBDIRS'].split(':')
                         libdirs.reverse()
                         for libdir in libdirs:
                                 if libdir not in sys.path:
@@ -500,8 +492,7 @@ class Configuration:
                         if key not in self:
                                 unknown.append (key)
                 if unknown:
-                        raise error(ERR_UNKNOWN_KEYS % \
-                                string.join (unknown, ', '))
+                        raise Exception(ERR_UNKNOWN_KEYS % ', '.join(unknown))
                 return
 
         def get (self,
@@ -592,7 +583,7 @@ class Configuration:
                 elif format == 'csh':
                         lines = self.asCsh()
                 else:
-                        raise error(ERR_UNRECOGNIZED)
+                        raise Exception(ERR_UNRECOGNIZED)
 
                 file.write ('#format: %s\n' % format)
                 for line in lines:
@@ -601,7 +592,7 @@ class Configuration:
 
         ###--- Convienance Methods ---###
         def merge(self, config):
-                # Purpose: Merge to configuration files together, giving preference to values
+                # Purpose: Merge two configuration files together, giving preference to values
                 #          stored in the current object.
                 # Returns: nothing
                 # Assumes: nothing
@@ -649,7 +640,10 @@ class Configuration:
                 #               A       "My ${A} value"
 
                 if steps == 0:
-                        raise error('Could not resolve parameter.')
+                        raise Exception('Could not resolve parameter.')
+                
+                if key not in self.options:
+                    return None
                 s = self.options[key]
                 re_search_match = re_parm.search(s)
                 while re_search_match:
