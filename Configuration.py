@@ -64,11 +64,13 @@
 #       directory tree to find your specified configuration file.  You must
 #       supply to correct path yourself.
 
-import ignoreDeprecation
 import os
 import sys
 import types
 import re
+
+sys.stderr.write('In Configuration.py\n')
+sys.stderr.flush()
 
 # if we invoked this module as a script (rather than importing it), then we
 # need to define a usage statement:
@@ -294,7 +296,6 @@ class Configuration:
                                 raise Exception(ERR_MISSING)
 
                 # load the configuration file and proceed to parse it.
-
                 fp = open (filename, 'r')
                 lines = fp.readlines()
                 fp.close ()
@@ -592,16 +593,17 @@ class Configuration:
 
         ###--- Convienance Methods ---###
         def merge(self, config):
-                # Purpose: Merge two configuration files together, giving preference to values
-                #          stored in the current object.
-                # Returns: nothing
-                # Assumes: nothing
-                # Effects: Adds all of the values that are not in the present object, into the present object.
-                # Throws:
+            # Purpose: Merge two configuration files together, giving preference to values
+            #          stored in the current object.
+            # Returns: nothing
+            # Assumes: nothing
+            # Effects: Adds all of the values that are not in the present object, into the present object.
+            # Throws:
                 
-                for key in list(config.keys()):
-                        if key not in self:
-                                self[key] = config.getUnresolvedValue(key)
+            for key in list(config.keys()):
+                if key not in self.options:
+                    self[key] = config.getUnresolvedValue(key)
+            return
 
         ###--- Private Methods ---###
 
