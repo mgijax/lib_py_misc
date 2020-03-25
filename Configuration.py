@@ -490,7 +490,7 @@ class Configuration:
 
                 unknown = []
                 for key in desired_keys:
-                        if key not in self:
+                        if key not in self.options:
                                 unknown.append (key)
                 if unknown:
                         raise Exception(ERR_UNKNOWN_KEYS % ', '.join(unknown))
@@ -519,7 +519,7 @@ class Configuration:
                 # Effects: nothing
                 # Throws: nothing
 
-                if key in self:
+                if key in self.options:
                         return self[key]
                 return None
 
