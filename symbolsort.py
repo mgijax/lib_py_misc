@@ -10,8 +10,6 @@
 #       This file is now also used in the ratpages.  It should be pulled out
 #       of there as well.
 
-import string
-
 # global dictionaries used by splitter() for speedy lookups:
 
 sdict = {       '' : ('')       }
@@ -35,7 +33,7 @@ def splitter (s):
                 return sdict[s]
         last = 0
         items = []
-        sl = string.lower (s)
+        sl = s.lower ()
         in_digits = sl[0] in digits
         for i in range(0, len(sl)):
                 if (sl[i] in digits) != in_digits:

@@ -77,7 +77,6 @@
 #       print people['mmm']['title']
 #                               ===> Scientific Software Engineer III
 
-import string
 import types
 import re
 
