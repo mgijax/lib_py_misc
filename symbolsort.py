@@ -40,13 +40,13 @@ def splitter (s):
         for i in range(0, len(sl)):
                 if (sl[i] in digits) != in_digits:
                         if in_digits:
-                                items.append (string.atoi(sl[last:i]))
+                                items.append (int(sl[last:i]))
                         else:
                                 items.append (sl[last:i])
                         last = i
                         in_digits = not in_digits
         if in_digits:
-                items.append (string.atoi (sl[last:]))
+                items.append (int(sl[last:]))
         else:
                 items.append (sl[last:])
         sdict[s] = tuple(items)
