@@ -550,13 +550,13 @@ def readAndParseLine (
 
                 # trim off anything following a comment delimiter
 
-                commentPos = string.find (line, '#')
+                commentPos = line.find ('#')
                 if commentPos != -1:
                         line = line[:commentPos]
 
                 # trim off any leading and trailing whitespace
 
-                line = string.strip(line)
+                line = line.strip()
 
                 # if 'name' has a value, then we know that we're on a
                 # continued line.  Otherwise, it's a new line.
@@ -566,8 +566,7 @@ def readAndParseLine (
                         # just add it to the current value (minus the slash)
 
                         if line[-1] == '\\':
-                                value = '%s %s' % (value,
-                                        string.rstrip(line[:-1]))
+                                value = '%s %s' % (value, line[:-1].rstrip())
 
                         # otherwise, add it to the value and return.
                         else:
@@ -583,10 +582,10 @@ def readAndParseLine (
                         # otherwise, try to split the line on the first equals
                         # sign.  if we can, then we have the name and value.
 
-                        eqPos = string.find (line, '=')
+                        eqPos = line.find ('=')
                         if eqPos != -1:
-                                name = string.rstrip(line[:eqPos])
-                                value = string.lstrip(line[eqPos+1:])
+                                name = line[:egPos].rstrip()
+                                value = line[eqPos+1:].lstrip()
 
                                 # if the value isn't marked as a continued
                                 # line, then we can return.  Otherwise, trim
@@ -594,7 +593,7 @@ def readAndParseLine (
 
                                 if value[-1:] != '\\':
                                         return name, value, lineCt
-                                value = string.rstrip(line[:-1])
+                                value = line[:-1].rstrip()
 
                         # check that we don't have a blank line.  if we don't,
                         # then we know that we should have a line with an
@@ -634,7 +633,7 @@ def substitute (
         # help locate a $ sign.  If there's not one, bail out here.  If there
         # is one, then apply the regex at that point.
 
-        pos = string.find (s, '$')              # position where we found $
+        pos = s.find ('$')              # position where we found $
         if pos == -1:
                 return s
 
