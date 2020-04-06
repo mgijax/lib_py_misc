@@ -583,7 +583,7 @@ def readAndParseLine (
 
                         eqPos = line.find ('=')
                         if eqPos != -1:
-                                name = line[:eqPos].restrip()
+                                name = line[:eqPos].rstrip()
                                 value = line[eqPos+1:].lstrip()
 
                                 # if the value isn't marked as a continued
