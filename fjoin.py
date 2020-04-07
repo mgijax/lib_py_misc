@@ -107,8 +107,7 @@
         been removed; use options --columns1 and --columns2 instead.
         2. Provide an option to sort internally, if the user
         doesn't have GNU sort.
-        3. Move comments into doc str..
-    1.2.1 July 2007     Allow user to specify path to GNU sort explicitly.
+        3. Move comments into doc strings.
 """
 
 #------------------------------------------------------------
@@ -238,6 +237,11 @@ class FJoin:
             help="Sort the input(s). Specify 1, 2, or both. " + \
             "(Default: no sorting done.)")
 
+        self.parser.add_option("--sortInternal", 
+            action="store_true", dest="sortInternal", default=False,
+            help="Forces any sorting to be done internally. " + \
+            "(Default: uses GNU sort, if available)")
+
         self.parser.add_option("-o", metavar="FILE",
             action="store", dest="ofile", default="-",
             help="Output file. (Default: standard out)")
@@ -276,29 +280,16 @@ class FJoin:
 
         self.parser.add_option("--comment1", metavar="STRING",
             action="store", dest="comment1", default=HASH,
-            help="The character or str.signifying a comment line in input 1. " + \
+            help="The character or string signifying a comment line in input 1. " + \
             "A comment line begins with STRING and ends at the next newline. " + \
             "Comment lines are ignored and are not preserved in the output. " + \
             "(Default: the HASH character, '#')")
             
         self.parser.add_option("--comment2", metavar="STRING",
             action="store", dest="comment2", default=HASH,
-            help="The character or str.signifying a comment line in input 2. " + \
+            help="The character or string signifying a comment line in input 2. " + \
             "(Default: the HASH character, '#')")
             
-        self.parser.add_option("--gnuSort", metavar="PATH",
-            action="store", dest="gnuSort", default=None,
-            help="Path to GNU sort utility. If given, will use it to " + \
-                "sort the inputs. You can also set the environment variable " + \
-                "GNUSORT instead. --gnuSort on the command line overrides " + \
-                "the GNUSORT environment variable. If neither GNUSORT or " + \
-                "--gnuSort is specified, sorting is done internally.")
-            
-        self.parser.add_option("--sortInternal", 
-            action="store_true", dest="sortInternal", default=False,
-            help="Forces sorting to be done internally, regardless of " + \
-            "GNUSORT or --gnuSort settings. ")
-
     #-------------------------------------
     def validate(self):
         """Checks that args are valid, opens files, and generally gets set up.
@@ -324,19 +315,12 @@ class FJoin:
         if self.options.sort not in [None,"1","2","both"]:
             self.parser.error("-s argument must be '1', '2', or 'both'.")
 
-        if self.options.gnuSort is None:
-            if "GNUSORT" in os.environ:
-                self.options.gnuSort = os.environ["GNUSORT"]
-            else:
-                self.options.sortInternal = True
-
         sort1 = self.options.sort in ["1","both"]
         if sort1:
             if self.options.sortInternal:
                 sort1 = "internal"
                 self.log("Internally sorting input: %s\n"%self.options.file1)
             else:
-                sort1 = self.options.gnuSort
                 self.log("Sorting input: %s\n" % self.options.file1)
 
         sort2 = self.options.sort in ["2","both"]
@@ -345,7 +329,6 @@ class FJoin:
                 sort2 = "internal"
                 self.log("Internally sorting input: %s\n"% self.options.file2)
             else:
-                sort2 = self.options.gnuSort
                 self.log("Sorting input: %s\n" % self.options.file2 )
 
 
@@ -476,7 +459,7 @@ class FJoin:
 
     #-------------------------------------
     def timestamp(self):
-        """Returns the current time, formatted as a str.
+        """Returns the current time, formatted as a string.
         """
         return time.asctime(time.localtime(time.time()))
 
@@ -498,13 +481,13 @@ class FJoin:
 
     #-------------------------------------
     def usageString(self):
-        """Returns a str.describing how to invoke this program.
+        """Returns a string describing how to invoke this program.
         """
         return "\n\t%prog -h\n\t%prog -v\n\t%prog [options] -1 FILE -2 FILE"
 
     #-------------------------------------
     def getVersion(self):
-        """Returns name and version str.for this implementation of fjoin.
+        """Returns name and version string for this implementation of fjoin.
         """
         return "%s-%s" % (FJOIN,VERSION)
     #-------------------------------------
@@ -686,9 +669,17 @@ class FJoinStream:
             self.sortInternal = True
             return
 
-        istart = self.columnMap['start']
-        self.sortCommand = self.sortIt +" -k%dn -t \"%s\" " % (istart+1,self.separator[0])
-        self.logger.log("SORT CMD: " + self.sortCommand + NL)
+        p = os.popen('sort --version')
+        response = p.read()
+        p.close()
+        if "not found" in response or "GNU" not in response:
+            self.sortInternal = True
+            self.logger.log(
+              "Did not find GNU sort; attempting internal sort for file: %s.\n"%self.fname)
+        else:
+            istart = self.columnMap['start']
+            self.sortCommand = "sort -k%dn -t \"%s\" " % (istart+1,self.separator[0])
+            self.logger.log("SORT CMD: " + self.sortCommand + NL)
 
         
     #-------------------------------------
@@ -723,7 +714,7 @@ class FJoinStream:
         while line:
             self.currentLineNum += 1
             if not (line==NL or line.startswith(self.commentStr)):
-                tokens = str.split(line, self.separator)
+                tokens = line.split(self.separator)
                 tokens[-1] = tokens[-1][:-1]
                 self.currentLineNum += 1
                 return tokens
@@ -760,7 +751,7 @@ class FJoinStream:
         if self.currentPos is None or self.currentPos <= f.start:
             self.currentPos = f.start
         else:
-            raise SORT_ERROR("Inversion (" + str(self.currentPos) + " > " + str(f.start) + ") detected at line " \
+            raise RuntimeError("Sort error: Inversion (" + str(self.currentPos) + " > " + str(f.start) + ") detected at line " \
                 + str(self.currentLineNum) \
                 + " of input " + self.fname)
         return f
@@ -890,23 +881,23 @@ class DLLIter:
         if self.p is None:
             raise StopIteration
         self.lastp = self.p
-        self.p = self.p.__next__
+        self.p = self.p.next
         return self.lastp.data
 
     def remove(self):
         """Removes from list the last item returned."""
         p = self.lastp
         if p is None:
-            raise Exception("Nothing to remove.")
+            raise RuntimeError("Error: Nothing to remove.")
         self.lastp = None # prevent repeated removals
 
         if p is self.dll.first:
-            self.dll.first = p.__next__
+            self.dll.first = p.next
         if p is self.dll.last:
             self.dll.last = p.prev
         if p.prev is not None:
-            p.prev.next = p.__next__
-        if p.__next__ is not None:
+            p.prev.next = p.next
+        if p.next is not None:
             p.next.prev = p.prev
         self.dll.n -= 1
 
