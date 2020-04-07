@@ -47,6 +47,7 @@ import subprocess
 import sys
 import os
 import top
+import io
 
 ###--------------------------------------------###
 ###--- status values for scheduled commands ---###
@@ -202,7 +203,7 @@ class Dispatcher:
                 # ahead and schedule them
 
                 if initialCommands:
-                        if type(initialCommands[0]) == bytes:
+                        if type(initialCommands[0]) == type(''):
                                 initialCommands = [ initialCommands ]
                         for cmd in initialCommands:
                                 self.schedule (cmd)
@@ -266,7 +267,7 @@ class Dispatcher:
 
                 # if we were given a string, split it into a list
 
-                if type(argv) == bytes:
+                if type(argv) == type(''):
                         argv = argv.split(' ')
 
                 # add to the list of commands and their string representations
@@ -472,9 +473,12 @@ class Dispatcher:
 
                         if process.poll() != None:
                                 # read return code, stdout, stderr
+                                
+                                stdoutText = io.TextIOWrapper(process.stdout)
+                                stderrText = io.TextIOWrapper(process.stderr)
 
-                                self.stdout[id] = process.stdout.readlines()
-                                self.stderr[id] = process.stderr.readlines()
+                                self.stdout[id] = stdoutText.readlines()
+                                self.stderr[id] = stderrText.readlines()
                                 self.returnCode[id] = process.returncode
                                 self.status[id] = FINISHED
 
