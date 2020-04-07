@@ -195,7 +195,7 @@ class RcdFile:
                                 # current Rcd object.
 
                                 else:
-                                        rcd.add (name, substitute (value, self.constants, lineCt))
+                                        rcd.add (name, substitute (value.strip(), self.constants, lineCt))
 
                         elif state == OUT_RCD:
 
@@ -213,7 +213,7 @@ class RcdFile:
                                 # to be added to our set of constants.
 
                                 else:
-                                        self.constants[name] = substitute (value, self.constants, lineCt)
+                                        self.constants[name] = substitute (value.strip(), self.constants, lineCt)
 
                         else:
                                 # This should never occur, but let's trap it
