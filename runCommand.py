@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 
 # Name: runCommand.py
 # Purpose: This module contains routines to encapsulate the forking of
@@ -26,13 +25,13 @@ import sys
 
 ###--- Public Functions ---###
 
-def runCommand (command,        # string; Unix command to execute
+def runCommand (command,        # str. Unix command to execute
         envvars = {}            # dictionary; maps env var names to values
         ):
         # Purpose: runs the given 'command' in a Bourne shell with the given
         #       'envvars' specified.  captures and returns the contents of
         #       stdout, stderr, and the exit code.
-        # Returns: (string stdout, string stderr, integer exit code)
+        # Returns: (str.stdout, str.stderr, integer exit code)
         # Assumes: nothing
         # Effects: varied depending on the parameters
         # Throws: nothing
@@ -52,7 +51,7 @@ class UnixCommand:
         #       and provides accessor functions for them
 
         def __init__ (self,
-                command,        # string; command to execute
+                command,        # str. command to execute
                 envvars = {}    # dictionary; maps env var names to values
                 ):
                 # Purpose: instantiate the UnixCommand object
@@ -71,8 +70,8 @@ class UnixCommand:
                 return
 
         def setEnvVar (self,
-                envvar,         # string; name of an environment variable
-                value           # string; value for that environment variable
+                envvar,         # str. name of an environment variable
+                value           # str. value for that environment variable
                 ):
                 # Purpose: allow the user to specify environment variables
                 #       which should be in-place when this UnixCommand is
@@ -155,7 +154,7 @@ class UnixCommand:
 
         def getStdOut (self):
                 # Purpose: accessor
-                # Returns: string - contains everything written to stdout when
+                # Returns: str.- contains everything written to stdout when
                 #       the command was last run
                 # Assumes: nothing
                 # Effects: nothing
@@ -165,7 +164,7 @@ class UnixCommand:
 
         def getStdErr (self):
                 # Purpose: accessor
-                # Returns: string - contains everything written to stderr when
+                # Returns: str.- contains everything written to stderr when
                 #       the command was last run
                 # Assumes: nothing
                 # Effects: nothing
@@ -210,7 +209,7 @@ def readAllFrom (
         ):
         # Purpose: read all the data available on 'fd' and return it as a
         #       single string
-        # Returns: string; see Purpose
+        # Returns: str. see Purpose
         # Assumes: 'fd' is open for reading
         # Effects: reads from 'fd'
         # Throws: posix.error if 'fd' is not open for reading
@@ -218,7 +217,7 @@ def readAllFrom (
         allout = ''
         out = os.read(fd, bufferSize)
         while out != '':
-                allout = allout + out
+                allout = allout + str(out)
                 out = os.read(fd, bufferSize)
         return allout
 
@@ -230,9 +229,9 @@ if __name__ == '__main__':
                         envvars={'AAAAAA' : 'BBBB'}
                         )
         print('----------stdout')
-        print(stdout[:-1])
+        print((stdout[:-1]))
         print('----------stderr')
-        print(stderr[:-1])
+        print((stderr[:-1]))
         print('----------exit code')
         print(code)
 #
@@ -254,4 +253,3 @@ if __name__ == '__main__':
 # Copyright (c) 1996, 1999, 2002 by The Jackson Laboratory
 # All Rights Reserved
 #
-
