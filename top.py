@@ -63,6 +63,13 @@ def execute (cmd):
         returncode = p.returncode
         stdout, stderr = p.communicate()
 
+        if (stdout != None):
+            stdout = stdout.decode()
+        if (stderr != None):
+            stderr = stderr.decode()
+        if (returncode != None):
+            returncode = int(returncode)
+            
         # free up the memory for 'p' and run garbage collection for every
         # 100th execution
 
