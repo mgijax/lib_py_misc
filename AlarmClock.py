@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 
 # Name: AlarmClock.py
 # Purpose: provides an easy mechanism for scheduling the execution of a
@@ -261,7 +260,7 @@ if __name__ == '__main__':
                 set (15)
                 print('ERROR - should not get here')
         except error as value:
-                print('PASS - %s' % value)
+                print(('PASS - %s' % value))
 
         # note that the previous alarm is still set, then clear it
         print()
@@ -306,4 +305,3 @@ if __name__ == '__main__':
 # Copyright (c) 1996, 1999, 2002 by The Jackson Laboratory
 # All Rights Reserved
 #
-

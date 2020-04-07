@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 
 # Name: Profiler.py
 # Purpose: to provide an easy and fast mechanism for software engineers to
@@ -47,7 +46,7 @@ class Profiler:
                 return
 
         def stamp (self,
-                message         # string; the message to be time-stamped and
+                message         # str. the message to be time-stamped and
                                 # ...logged
                 ):
                 # Purpose: time-stamp the given 'message' and add it to the
@@ -77,7 +76,7 @@ class Profiler:
                 # Purpose: get a list of tuples, one per message logged so
                 #       far.
                 # Returns: list of tuples, each being:
-                #       (float time-stamp, string message)
+                #       (float time-stamp, str.message)
                 # Assumes: nothing
                 # Effects: nothing
                 # Throws: nothing
@@ -85,7 +84,7 @@ class Profiler:
                 return copy.deepcopy (self.messages)
 
         def write (self,
-                filename = None         # optional string; filename to which
+                filename = None         # optional str. filename to which
                                         # ...to write the table of profiling
                                         # ...information
                 ):
@@ -152,7 +151,7 @@ class Profiler:
                 #       entry and the previous one, percentage of the total
                 #       time represented by this elapsed time, a histogram
                 #       which prints one '*' for each 5% in this row, and the
-                #       actual message string itself.
+                #       actual message str.itself.
 
                 line = '%7s %7s %7s %-20s%s\n' % (
                         'total',
@@ -170,7 +169,7 @@ class Profiler:
                 timestamp,      # float; timestamp for this entry
                 diffTime,       # float; amount of time elapsed between this
                                 # ...entry and the previous one
-                message         # string; the message logged
+                message         # str. the message logged
                 ):
                 # Purpose: writes one or more lines needed to represent this
                 #       logged entry in the output.
@@ -194,10 +193,10 @@ class Profiler:
                 # integer number of '*' needed, with one per 5% in this entry
                 starCount = int(percent / 5.0)
 
-                # actual string of '*' to be printed as the histogram field
+                # actual str.of '*' to be printed as the histogram field
                 stars = '*' * starCount
 
-                # list of strings; break up long messages as needed into
+                # list of str.; break up long messages as needed into
                 # multiple lines
                 messageLines = self.__splitMessage(message)
 
@@ -221,31 +220,31 @@ class Profiler:
                 return
 
         def __splitMessage (self,
-                message                 # string; the message to be split up
+                message                 # str. the message to be split up
                 ):
                 # Purpose: if 'message' is too long to print in the right
                 #       column of one line, then break it up into multiple
-                #       strings
-                # Returns: list of strings, each of which will fit in the
+                #       str.
+                # Returns: list of str., each of which will fit in the
                 #       right-hand column
                 # Assumes: nothing
                 # Effects: nothing
                 # Throws: nothing
 
-                # list of strings, each of which is part of 'message'
+                # list of str., each of which is part of 'message'
                 list = []
 
                 # integer length of 'message'
                 msgLen = len(message)
 
-                # integer; where to start copying the next substring of
+                # integer; where to start copying the next substr.of
                 # 'message'
                 start = 0
 
                 # integer; how many character will fit in the right column
                 chunkSize = 34
 
-                # continue as long as there's more of the 'message' string to
+                # continue as long as there's more of the 'message' str.to
                 # be handled
                 while start < msgLen:
 
@@ -253,13 +252,13 @@ class Profiler:
                         # from 'message'
                         end = start + chunkSize
 
-                        # extract this substring from 'message' and add it to
+                        # extract this substr.from 'message' and add it to
                         # the list
 
                         list.append (message[start:end])
                         start = end
 
-                # if the list was empty, then just add an empty string to it
+                # if the list was empty, then just add an empty str.to it
 
                 if len(list) == 0:
                         list.append ('')

@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 """
  fjoin.py is the reference implementation of the feature join 
  algorithm described in the paper:
@@ -108,7 +107,7 @@
         been removed; use options --columns1 and --columns2 instead.
         2. Provide an option to sort internally, if the user
         doesn't have GNU sort.
-        3. Move comments into doc strings.
+        3. Move comments into doc str..
     1.2.1 July 2007     Allow user to specify path to GNU sort explicitly.
 """
 
@@ -277,14 +276,14 @@ class FJoin:
 
         self.parser.add_option("--comment1", metavar="STRING",
             action="store", dest="comment1", default=HASH,
-            help="The character or string signifying a comment line in input 1. " + \
+            help="The character or str.signifying a comment line in input 1. " + \
             "A comment line begins with STRING and ends at the next newline. " + \
             "Comment lines are ignored and are not preserved in the output. " + \
             "(Default: the HASH character, '#')")
             
         self.parser.add_option("--comment2", metavar="STRING",
             action="store", dest="comment2", default=HASH,
-            help="The character or string signifying a comment line in input 2. " + \
+            help="The character or str.signifying a comment line in input 2. " + \
             "(Default: the HASH character, '#')")
             
         self.parser.add_option("--gnuSort", metavar="PATH",
@@ -477,7 +476,7 @@ class FJoin:
 
     #-------------------------------------
     def timestamp(self):
-        """Returns the current time, formatted as a string.
+        """Returns the current time, formatted as a str.
         """
         return time.asctime(time.localtime(time.time()))
 
@@ -499,13 +498,13 @@ class FJoin:
 
     #-------------------------------------
     def usageString(self):
-        """Returns a string describing how to invoke this program.
+        """Returns a str.describing how to invoke this program.
         """
         return "\n\t%prog -h\n\t%prog -v\n\t%prog [options] -1 FILE -2 FILE"
 
     #-------------------------------------
     def getVersion(self):
-        """Returns name and version string for this implementation of fjoin.
+        """Returns name and version str.for this implementation of fjoin.
         """
         return "%s-%s" % (FJOIN,VERSION)
     #-------------------------------------
@@ -724,7 +723,7 @@ class FJoinStream:
         while line:
             self.currentLineNum += 1
             if not (line==NL or line.startswith(self.commentStr)):
-                tokens = string.split(line, self.separator)
+                tokens = str.split(line, self.separator)
                 tokens[-1] = tokens[-1][:-1]
                 self.currentLineNum += 1
                 return tokens

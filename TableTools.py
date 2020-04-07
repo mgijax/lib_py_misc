@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 
 HELPTEXT = '''
 #
@@ -216,7 +215,7 @@ class TableTool:
 
         self.parser.add_option("--convert", dest="doConvert", 
             action="store_true", default=False,
-            help="Convert numeric strings to " + \
+            help="Convert numeric str. to " + \
                  "integer/float numbers. [Default=do not convert]")
 
 
@@ -256,7 +255,7 @@ class TableTool:
             line = efd.readline()
             while(line):
                 if line[0] not in [NL,HASH]:
-                    exprs.append(string.strip(line))
+                    exprs.append(str.strip(line))
                 line = efd.readline()
             efd.close()
 
@@ -266,7 +265,7 @@ class TableTool:
 
         # Create the global context in which expressions
         # will be evaluated.
-        s = "import sys\nimport string\nimport re\nimport math\n"
+        s = "import sys\nimport str.nimport re\nimport math\n"
         if self.options.execFile is not None:
             fd=open(self.options.execFile,'r')
             s = s + fd.read()
@@ -298,7 +297,7 @@ class TableTool:
                 self.isFilter.append( False )
 
     #---------------------------------------------------------
-    # Given a string expression, returns a callable object that
+    # Given a str.expression, returns a callable object that
     # evaluates it. The arguments to the function are IN1 and IN2. 
     #
     def makeFunction(self, expr):
@@ -402,14 +401,14 @@ class TableTool:
 
     #---------------------------------------------------------
     # Parses a list of integers from val. val may
-    # be a string or a list of strings. (If a list,
+    # be a str.or a list of str.. (If a list,
     # it's joined first.) Column numbers are separated
     # by commas. Returns list of all the
-    # integers parsed from the string.
+    # integers parsed from the str.
     #
     def parseIntList(self, val):
         if type(val) is list:
-            val = string.join(val, ",")
+            val = str.join(val, ",")
         val=re.split("[, ]+", val)
         return list(map(int, [_f for _f in val if _f]))
 
@@ -463,7 +462,7 @@ class TableTool:
             fd = self.ofd
         if fd is self.ofd:
             self.nOutputRows += 1
-        fd.write(string.join(list(map(str,row)),TAB))
+        fd.write(str.join(list(map(str,row)),TAB))
         fd.write(NL)
 
 #------------------------------------------------------------
@@ -492,7 +491,7 @@ class BinaryTableTool( TableTool ):
 # The remaining elements 1 .. n are the column values.
 # By default, column values are converted 
 # to numbers if possible, and are otherwise returned 
-# as strings (This conversion attempt can be suppressed.)
+# as str. (This conversion attempt can be suppressed.)
 #
 # (TODO: refactor this code to take advantage of Python's csv module.)
 #
@@ -500,14 +499,14 @@ class TableFileIterator:
 
     def __init__(self, file=None, dc=True):
 
-        # if a string matches this, it's not a number
+        # if a str.matches this, it's not a number
         # (Strings that do match might still not be a
         # number, e.g., "...". This regex is just
         # used as a first test.)
         #
         self.nre = re.compile("[^-+0-9.eE ]")
 
-        # if string matches self.nre and then matches
+        # if str.matches self.nre and then matches
         # this regex, try conversion to float(), 
         # otherwise int()
         #
@@ -595,7 +594,7 @@ class TableFileIterator:
         self.fileName = None
 
     #---------------------------------------------------------
-    # Converts as many numeric strings to actual numbers
+    # Converts as many numeric str. to actual numbers
     # as possible in the given row. Updates the row.
     #
     def convertValues(self, row):
@@ -603,10 +602,10 @@ class TableFileIterator:
         for val in row:
             i=i+1
             if i>0 and self.nre.search(val):
-                # cannot be a number. Leave it as string.
+                # cannot be a number. Leave it as str.
                 continue
 
-            # Try converting numeric string.
+            # Try converting numeric str.
             try:
                 if self.fre.search(val):
                     row[i] = float(val)
@@ -631,7 +630,7 @@ class TableFileIterator:
 
             self.currentRowNum += 1
             self.currentRow = [self.currentRowNum] \
-                + string.split(self.currentLine, TAB)
+                + str.split(self.currentLine, TAB)
             self.currentRow[-1] = self.currentRow[-1][:-1] # remove newline from last col
 
             if self.ncols == 0:
@@ -829,7 +828,7 @@ class TableFileIterator:
 #         count - counts number of input rows in each partition
 #
 #         first:<column> - outputs column value for first member of partition
-#         list:<column>[:<pss>] - concatenates input values into a string list
+#         list:<column>[:<pss>] - concatenates input values into a str.list
 #               By default, items are separated by a comma and no prefix/suffix
 #               is added. Optional <pss> explicitly specifies prefix, separator,
 #               and suffix as single characters.
@@ -898,7 +897,7 @@ class TAggregate( UnaryTableTool) :
         self.parser.add_option("-a", "--aggregate", 
             metavar="FCN:COLUMN",
             action="append", dest="aggSpecs", default=[], 
-            help="Aggregation specifier. FCN is one of: " + string.join(_ALL_FUNCS, ","))
+            help="Aggregation specifier. FCN is one of: " + str.join(_ALL_FUNCS, ","))
 
     #---------------------------------------------------------
     def processOptions(self, opts):
@@ -912,7 +911,7 @@ class TAggregate( UnaryTableTool) :
 
     #----------------------------------------------------------------------
     def addGroupByColumn(self,g):
-        #split on any string of non-digits
+        #split on any str.of non-digits
         gcols = re.split('[^0-9]+', g)
         for gc in gcols:
             if gc=="":
@@ -925,7 +924,7 @@ class TAggregate( UnaryTableTool) :
 
     #----------------------------------------------------------------------
     def addAggregation(self,arg):
-        tokens = string.split(arg, COLON,2)
+        tokens = str.split(arg, COLON,2)
         func=tokens[0]
         colIndex = None
         if len(tokens) > 1:
@@ -1096,7 +1095,7 @@ class Concatenator( Accumulator ):
 
     def __str__(self):
         return self.prefix + \
-            string.join( list(map(str,self.list)), self.separator) + \
+            str.join( list(map(str,self.list)), self.separator) + \
             self.suffix
 
 
@@ -1229,7 +1228,7 @@ _FUNC2CLASS[AVG] = Statistics
 # Table bucketize. Bucketizes a table containing a pair of ID columns.
 # Each row represents an edge in a bipartite association graph.
 # To represent unassociated IDs (i.e., those that end up in 1-0
-# or 0-1 buckets), a null-value string can be declared, and appear
+# or 0-1 buckets), a null-value str.can be declared, and appear
 # in one ID column or the other. (Such as when performing an
 # outer-join...see tj.)
 #
@@ -1269,9 +1268,9 @@ class TBucketize( UnaryTableTool ):
             metavar="COLUMN(S)",
             help="Specifies column(s) of second ID.")
 
-        self.parser.add_option("-n", "--null-string", dest="nullString", 
+        self.parser.add_option("-n", "--null-str., dest="nullString", 
             action="store", default = "", metavar="NULLSTR",
-            help="Specifies string for null values. (Default: empty string)")
+            help="Specifies str.for null values. (Default: empty str.")
 
         self.parser.add_option("-o", "--output-dir", dest="outDir", 
             action="store", default = "", metavar="DIR",
@@ -1458,14 +1457,14 @@ class CCA:
         return str(self.na) + "-" + str(self.nb)
 
     def go(self):
-        for n in self.graph.nodes.keys():
+        for n in list(self.graph.nodes.keys()):
             if n not in self.visited:
                 self.cc = {}
                 self.na = 0
                 self.nb = 0
                 self.cid += 1
                 self.reach(n) 
-                for cn in self.cc.keys():
+                for cn in list(self.cc.keys()):
                     self.visited[cn] = (self.visited[cn], self.getBucket())
 
 #------------------------------------------------------------
@@ -1670,7 +1669,7 @@ class TDifference (TDiffIntUnion):
 #               is not read from the input). 
 #               
 #       all the __builtin__ functions
-#       string  the Python string ligrary
+#       str. the Python str.ligrary
 #       re      the Python regular expression library
 #       math    the Python math library
 #       
@@ -1865,9 +1864,9 @@ class TJoin( BinaryTableTool ):
             action="store_true", default = False,
             help="Performs 'right outer' join (default: No).")
 
-        self.parser.add_option("-n", "--null-string", dest="nullString", 
+        self.parser.add_option("-n", "--null-str., dest="nullString", 
             action="store", default = "", metavar="NULLSTR",
-            help="Specifies string for null values. (Default: empty string)")
+            help="Specifies str.for null values. (Default: empty str.")
 
     #---------------------------------------------------------
     #
@@ -1948,7 +1947,7 @@ class TJoin( BinaryTableTool ):
     #---------------------------------------------------------
     def scanOuter(self):
         if self.selfJoin:
-            for rowlist in self.inner.values():
+            for rowlist in list(self.inner.values()):
                 for outerrow in rowlist:
                     for innerrow in rowlist:
                         self.processPair(outerrow,innerrow)
@@ -2213,7 +2212,7 @@ class TXpand ( UnaryTableTool ) :
 
     #---------------------------------------------------------
     def processXspec(self, spec):
-        tokens = string.split(spec, ':', 1)
+        tokens = str.split(spec, ':', 1)
         #
         col = int(tokens[0])
         pss = DEFAULT_PSS
@@ -2252,7 +2251,7 @@ class TXpand ( UnaryTableTool ) :
             self.processXspec(spec)
 
     #---------------------------------------------------------
-    # Parses a string encoded list into an actual list.
+    # Parses a str.encoded list into an actual list.
     # 
     #
     def expandValue(self, value, prefix, sep, suffix, conv=None):
@@ -2331,7 +2330,7 @@ TS = TSort
 TU = TUnion
 TX = TXpand
 
-# Maps string to operator classes
+# Maps str.to operator classes
 
 OPERATION_MAP = {
         'fj' : FJ,

@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 
 # Name: Configuration.py
 # Purpose: provide a uniform means for accessing files of configuration
@@ -139,7 +138,7 @@ MEMORY = {}     # maps from (filename, findFile) key to a Configuration
 ###--- Functions ---###
 
 def get_Configuration (
-        filename,       # string; name of the configuration file to read
+        filename,       # str. name of the configuration file to read
         findFile = 0    # boolean (0/1); should we traverse up the directory
                         # tree to find 'filename'?
         ):
@@ -172,7 +171,7 @@ def get_Configuration (
         return config
 
 def find_path (
-        s = 'Configuration'     # string pathname for which we're looking
+        s = 'Configuration'     # str.pathname for which we're looking
         ):
         # Purpose: find an absolute path to the "nearest" instance of 's',
         #       first looking at the directory in which the current script
@@ -265,7 +264,7 @@ class Configuration:
         #       of file formats.
 
         def __init__ (self,
-                filename,               # string; name of configuration file,
+                filename,               # str. name of configuration file,
                                         # or the path to that file
                 findFile = 0            # boolean 0/1; should we traverse up
                                         # the directory tree to find
@@ -284,7 +283,7 @@ class Configuration:
                 #       4. propagates error from find_path if we cannot find
                 #               the script in the user's PATH
 
-                self.options = {}       # options[parm name] = string value
+                self.options = {}       # options[parm name] = str.value
 
                 # if we need to traverse up the directory tree to find the
                 # given filename, then do so.  If we don't find it, then raise
@@ -359,11 +358,11 @@ class Configuration:
         ###--- Dictionary-Compatible Methods ---###
 
         def __getitem__ (self,
-                key             # string; parameter name
+                key             # str. parameter name
                 ):
                 # Purpose: get the value associated with 'key', in a
                 #       dictionary-style manner
-                # Returns: string; parameter value for 'key'
+                # Returns: str. parameter value for 'key'
                 # Assumes: nothing
                 # Effects: nothing
                 # Throws: KeyError if 'key' is not a valid parameter name
@@ -380,8 +379,8 @@ class Configuration:
                 return len(self.options)
 
         def __setitem__ (self,
-                key,            # string; parameter name
-                value           # string; parameter value
+                key,            # str. parameter name
+                value           # str. parameter value
                 ):
                 # Purpose: set the 'value' associated with  'key', in a
                 #       dictionary-style manner
@@ -395,7 +394,7 @@ class Configuration:
                 return
 
         def has_key (self,
-                key             # string; parameter name
+                key             # str. parameter name
                 ):
                 # Purpose: test to see if 'key' is a valid parameter name
                 # Returns: boolean; 0 if no 'key' parameter, or 1 if it exists
@@ -407,7 +406,7 @@ class Configuration:
 
         def items (self):
                 # Purpose: get the whole set of parameter names and values
-                # Returns: a list of tuples, each containing two strings:
+                # Returns: a list of tuples, each containing two str.:
                 #       (parameter name, parameter value)
                 # Assumes: nothing
                 # Effects: nothing
@@ -424,7 +423,7 @@ class Configuration:
 
         def keys (self):
                 # Purpose: get a list of parameter names
-                # Returns: list of strings, each of which is a parameter name
+                # Returns: list of str., each of which is a parameter name
                 # Assumes: nothing
                 # Effects: nothing
                 # Throws: nothing
@@ -474,7 +473,7 @@ class Configuration:
 
 
         def check_keys (self,
-                desired_keys    # list of strings; each string is one key that
+                desired_keys    # list of str.; each str.is one key that
                                 # should be defined in the config file
                 ):
                 # Purpose: check that all the 'desired_keys' are, in fact,
@@ -497,11 +496,11 @@ class Configuration:
                 return
 
         def get (self,
-                key             # string; parameter name
+                key             # str. parameter name
                 ):
                 # Purpose: get the value associated with 'key', wrapper for
                 #       __getitem__
-                # Returns: string; parameter value associated with 'key'
+                # Returns: str. parameter value associated with 'key'
                 # Assumes: nothing
                 # Effects: nothing
                 # Throws: propagates KeyError if 'key' is not a known
@@ -510,11 +509,11 @@ class Configuration:
                 return self[key]
 
         def lookup (self,
-                key             # string; parameter name
+                key             # str. parameter name
                 ):
                 # Purpose: get the value associated with 'key', or None if
                 #       'key' is not a known parameter name
-                # Returns: string or None; see Purpose
+                # Returns: str.or None; see Purpose
                 # Assumes: nothing
                 # Effects: nothing
                 # Throws: nothing
@@ -528,7 +527,7 @@ class Configuration:
         def asCsh (self):
                 # Purpose: build a C-shell version of the configuration
                 #       parameters and values
-                # Returns: a list of strings, used to set the configuration
+                # Returns: a list of str., used to set the configuration
                 #       options for C-shell scripts
                 # Assumes: nothing
                 # Effects: nothing
@@ -540,7 +539,7 @@ class Configuration:
         def asSh (self):
                 # Purpose: build a Bourne shell version of the configuration
                 #       parameters and values
-                # Returns: a list of strings, used to set the configuration
+                # Returns: a list of str., used to set the configuration
                 #       options for Bourne shell scripts
                 # Assumes: nothing
                 # Effects: nothing
@@ -555,7 +554,7 @@ class Configuration:
         def asTab (self):
                 # Purpose: build a tab-delimited version of the configuration
                 #       parameters and values
-                # Returns: a list of strings, with the parameter name
+                # Returns: a list of str., with the parameter name
                 #       followed by a tab and the parameter value
                 # Assumes: nothing
                 # Effects: nothing
@@ -565,7 +564,7 @@ class Configuration:
 
         def write (self,
                 file=sys.stdout,        # file pointer; file to write to
-                format='tab'            # string; 'tab', 'csh', or 'sh'
+                format='tab'            # str. 'tab', 'csh', or 'sh'
                 ):
                 # Purpose: write the configuration parameters out to a file
                 #       in a given format, with a header line specifying the
@@ -609,7 +608,7 @@ class Configuration:
 
         def rawItems (self):
                 # Purpose: get the whole set of parameter names and values
-                # Returns: a list of tuples, each containing two strings:
+                # Returns: a list of tuples, each containing two str.:
                 #       (parameter name, parameter value)
                 # Assumes: nothing
                 # Effects: nothing
@@ -621,7 +620,7 @@ class Configuration:
                 return list(self.options.items())     
         
         def resolve (self,
-                key,            # string; parameter name
+                key,            # str. parameter name
                 steps = 100     # integer; maximum recursive levels allowed
                 ):
                 # Purpose: return the value of the parameter named 'key',
@@ -687,4 +686,3 @@ if __name__ == '__main__':
 # Copyright (c) 1996, 1999, 2002 by The Jackson Laboratory
 # All Rights Reserved
 #
-

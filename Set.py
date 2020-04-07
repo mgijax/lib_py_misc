@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 
 # Name:         Set.py
 # Author:       Jon Beal
@@ -58,13 +57,13 @@ class Set:
                 return
 
         def __str__ (self):
-                # Purpose: return a comma-separated string of items in this Set
+                # Purpose: return a comma-separated str.of items in this Set
                 # Returns: see Purpose
                 # Assumes: nothing
                 # Effects: see Purpose
                 # Throws: nothing
 
-                s = ''                                  # string we're building
+                s = ''                                  # str.we're building
                 for item in list(self.elements.keys ()):      # concatenate the string
                         s = s + ', ' + str (item)       # rep of each item to s
                 return '%s' % s[2:]                     # skip the leading
@@ -282,4 +281,3 @@ class Set:
 # Copyright (c) 1996, 1999, 2002 by The Jackson Laboratory
 # All Rights Reserved
 #
-
