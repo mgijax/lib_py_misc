@@ -668,7 +668,7 @@ class TableDataSet:
     #          For each field that is multiValued, the corresponding value is
     #           a list of values.
     # Effects: see Purpose
-        if type(fieldNames) == bytes:
+        if type(fieldNames) == str:
             fieldNames = [fieldNames]
             values     = [values]
 

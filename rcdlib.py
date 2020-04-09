@@ -452,7 +452,7 @@ class Rcd:
 
                 if key not in self.values:
                         self.values[key] = value
-                elif type(self.values[key]) == bytes:
+                elif type(self.values[key]) == str:
                         self.values[key] = [ self.values[key], value ]
                 else:
                         self.values[key].append (value)
@@ -471,7 +471,7 @@ class Rcd:
                 #	empty list.
 
                 item = self[key]
-                if type(item) == bytes:
+                if type(item) == str:
                         return [ item ]
                 elif item == None:
                         return []
@@ -517,7 +517,7 @@ class Rcd:
 
                 if key not in self.regex:
                         item = self[key]
-                        if type(item) == bytes:
+                        if type(item) == str:
                                 self.regex[key] = regex.compile (item)
                         elif item == None:
                                 self.regex[key] = None
