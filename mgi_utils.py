@@ -340,8 +340,8 @@ def date( format = '%c' ):
 
 
 # aliases
-byFilename = symbolsort.nomenCompare
-bySymbol = symbolsort.nomenCompare
+#byFilename = symbolsort.nomenCompare
+#bySymbol = symbolsort.nomenCompare
 
 def setAlarm(timeout, alarmclock=AlarmClock):
         # Schedule a UNIX alarm call after timeout seconds
