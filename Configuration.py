@@ -417,7 +417,7 @@ class Configuration:
                 #       self.rawItems() method instead.
 
                 list = []
-                for name in list(self.keys()):
+                for name in list:
                         list.append ( (name, self[name]) )
                 return list
 
