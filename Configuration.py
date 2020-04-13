@@ -1,75 +1,71 @@
 
 # Name: Configuration.py
 # Purpose: provide a uniform means for accessing files of configuration
-#       parameters in different formats
+#	parameters in different formats
 # On Import: several regular expressions (see below) are compiled
 # Notes: This file may be either imported as a python library or executed as a
-#       script to convert from one config file type to another.
+#	script to convert from one config file type to another.
 #
-#       When reading a configuration file, the default format is tab-
-#       delimited.  If you'd prefer, your configuration file may be written
-#       as Bourne shell or C-shell variable declarations.  To override the
-#       default expectation (tab-delimited), just make sure that the first
-#       line of your configuration file is one of the following:
-#               #format: csh
-#               #format: sh
-#               #format: tab
+#	When reading a configuration file, the default format is tab-
+#	delimited.  If you'd prefer, your configuration file may be written
+#	as Bourne shell or C-shell variable declarations.  To override the
+#	default expectation (tab-delimited), just make sure that the first
+#	line of your configuration file is one of the following:
+#		#format: csh
+#		#format: sh
+#		#format: tab
 #
-#       When using this file as a python module, it looks for a special
-#       LIBDIRS configurtion option.  Its value should be a colon-delimited
-#       list of directory names in which one expects to find Python libraries.
-#       If a LIBDIRS configuration option is found, we add those directories
-#       to the PYTHONPATH.
+#	When using this file as a python module, it looks for a special
+#	LIBDIRS configurtion option.  Its value should be a colon-delimited
+#	list of directory names in which one expects to find Python libraries.
+#	If a LIBDIRS configuration option is found, we add those directories
+#	to the PYTHONPATH.
 #
-#       To use this file as a python module, check out the following code
-#       examples:
-#               # import the module
-#               import Configuration
+#	To use this file as a python module, check out the following code
+#	examples:
+#		# import the module
+#		import Configuration
 #
-#               # read a config file named 'conf' in the current directory
-#               c = Configuration.Configuration ('conf')
+#		# read a config file named 'conf' in the current directory
+#		c = Configuration.Configuration ('conf')
 #
-#               # read a config file named 'conf' which is located either in
-#               # the current directory or in one of its parent directories:
-#               c = Configuration.Configuration ('conf', 1)
+#		# read a config file named 'conf' which is located either in
+#		# the current directory or in one of its parent directories:
+#		c = Configuration.Configuration ('conf', 1)
 #
-#               # look up the value of parameter 'foo' or raise a KeyError
-#               # exception if it is not defined:
-#               s = c['foo']
-#               s = c.get('foo')
+#		# look up the value of parameter 'foo' or raise a KeyError
+#		# exception if it is not defined:
+#		s = c['foo']
+#		s = c.get('foo')
 #
-#               # look up the value of parameter 'foo' or return None if it is
-#               # not defined:
-#               s = c.lookup('foo')
+#		# look up the value of parameter 'foo' or return None if it is
+#		# not defined:
+#		s = c.lookup('foo')
 #
-#       When invoking this file as a script, you will need to specify two
-#       parameters -- the name of the configuration file and the desired
-#       output format.  It then reads the configuration file and writes its
-#       contents to stdout in that format.  As examples consider:
+#	When invoking this file as a script, you will need to specify two
+#	parameters -- the name of the configuration file and the desired
+#	output format.  It then reads the configuration file and writes its
+#	contents to stdout in that format.  As examples consider:
 #
-#               # You're working in a Bourne shell script and you want to
-#               # define the configuration options in the file 'config':
-#               `Configuration.py config sh`
+#		# You're working in a Bourne shell script and you want to
+#		# define the configuration options in the file 'config':
+#		`Configuration.py config sh`
 #
-#               # You're working in a C-shell script and you want to define
-#               # the configuration options in the file 'config':
-#               `Configuration.py config csh`
+#		# You're working in a C-shell script and you want to define
+#		# the configuration options in the file 'config':
+#		`Configuration.py config csh`
 #
-#               # At this point, you can use typical shell notation
-#               # to reference the configuration options -- to use the value
-#               # of a configuration option named BOB, use $BOB
+#		# At this point, you can use typical shell notation
+#		# to reference the configuration options -- to use the value
+#		# of a configuration option named BOB, use $BOB
 #
-#       When invoked as a script, this module does not traverse up the
-#       directory tree to find your specified configuration file.  You must
-#       supply to correct path yourself.
+#	When invoked as a script, this module does not traverse up the
+#	directory tree to find your specified configuration file.  You must
+#	supply to correct path yourself.
 
 import os
 import sys
-import types
 import re
-
-sys.stderr.write('In Configuration.py\n')
-sys.stderr.flush()
 
 # if we invoked this module as a script (rather than importing it), then we
 # need to define a usage statement:
@@ -79,6 +75,10 @@ if __name__ == '__main__':
         The filetype may be csh, sh, or tab.  Output is to stdout.
         Or, this module may be imported as a Python library.
 ''' % sys.argv[0]
+
+###--- Exception-Related Global Variables ---###
+
+error = 'Configuration.error'		# exception raised by this module
 
 # exception values when 'error' is raised by this module:
 
@@ -92,44 +92,44 @@ ERR_UNKNOWN_KEYS = 'Uknown configuration options: %s'
 re_format = re.compile('#format: *(.*)',re.IGNORECASE)
 
 # pick out comments and blank lines:
-re_comment = re.compile('(#.*)'                 # comment
-                        '|'                     # or
-                        '(^[ \\t]*$)')          # blank line
+re_comment = re.compile('(#.*)'			# comment
+                        '|'			# or
+                        '(^[ \\t]*$)')		# blank line
 
 # parse a tab or space-delimited line:
-re_tabbed = re.compile('([^\\t\\n ]*)'          # parameter name
-                        '[\\t ]*[\'"]?'         # spacing, optional quote
-                        '([^\'"\\n]*)'          # parameter value
-                        '[\'"]?')               # optional quote
+re_tabbed = re.compile('([^\\t\\n ]*)'		# parameter name
+                        '[\\t ]*[\'"]?'		# spacing, optional quote
+                        '([^\'"\\n]*)'		# parameter value
+                        '[\'"]?')		# optional quote
 
 # parse a Bourne shell-formatted line:
-re_shell = re.compile('([^\\t =]*)'             # parameter name
-                        '[\\t ]*=[\\t ]*'       # spacing, =, spacing
-                        '[\'"]?'                # optional quote
-                        '([^\'"\\n]*)'          # parameter value
-                        '[\'"]?')               # optional quote
+re_shell = re.compile('([^\\t =]*)'		# parameter name
+                        '[\\t ]*=[\\t ]*'	# spacing, =, spacing
+                        '[\'"]?'		# optional quote
+                        '([^\'"\\n]*)'		# parameter value
+                        '[\'"]?')		# optional quote
 
 # parse a C-shell-formatted line using 'set':
-re_cshell1 = re.compile('set[\\t ]+'            # set keyword, spacing
-                        '([^\\t ]*)'            # parameter name
-                        '[\\t ]*=[\\t ]*'       # spacing, =, spacing
-                        '[\'"]?'                # optional quote
-                        '([^\'"\\n]*)'          # set keyword, spacing
-                        '[\'"]?')               # optional quote
+re_cshell1 = re.compile('set[\\t ]+'		# set keyword, spacing
+                        '([^\\t ]*)'		# parameter name
+                        '[\\t ]*=[\\t ]*'	# spacing, =, spacing
+                        '[\'"]?'		# optional quote
+                        '([^\'"\\n]*)'		# set keyword, spacing
+                        '[\'"]?')		# optional quote
 
 # parse a C-shell-formatted line using 'setenv':
-re_cshell2 = re.compile('setenv[\\t ]+'         # setenv keyword, spacing
-                        '([^\\t\\n ]+)'         # parameter name
-                        '[\\t ]*[\'"]?'         # spacing, optional quote
-                        '([^\'"\\n]*)'          # parameter value
-                        '[\'"]?')               # optional quote
+re_cshell2 = re.compile('setenv[\\t ]+'		# setenv keyword, spacing
+                        '([^\\t\\n ]+)'		# parameter name
+                        '[\\t ]*[\'"]?'		# spacing, optional quote
+                        '([^\'"\\n]*)'		# parameter value
+                        '[\'"]?')		# optional quote
 
 # find one parameter name embedded within another parameter value:
-re_parm = re.compile('\\${([^}]+)}')            # format like ${MYPARM}
+re_parm = re.compile('\\${([^}]+)}')		# format like ${MYPARM}
 
 ###--- Other Global Variables ---###
 
-MEMORY = {}     # maps from (filename, findFile) key to a Configuration
+MEMORY = {}	# maps from (filename, findFile) key to a Configuration
                 # object, so we can remember the object once we build it for
                 # a given configuration file, and just return it rather than
                 # rereading the file and rebuilding the object if we're asked
@@ -138,20 +138,20 @@ MEMORY = {}     # maps from (filename, findFile) key to a Configuration
 ###--- Functions ---###
 
 def get_Configuration (
-        filename,       # str. name of the configuration file to read
-        findFile = 0    # boolean (0/1); should we traverse up the directory
+        filename,	# str. name of the configuration file to read
+        findFile = 0	# boolean (0/1); should we traverse up the directory
                         # tree to find 'filename'?
         ):
         # Purpose: This is a wrapper over the constructor for the
-        #       Configuration class.  It uses the global MEMORY to remember
-        #       Configuration objects that we've already constructed, so we
-        #       can return them directly without rebuilding them.
+        #	Configuration class.  It uses the global MEMORY to remember
+        #	Configuration objects that we've already constructed, so we
+        #	can return them directly without rebuilding them.
         # Returns: Configuration object
         # Assumes: nothing
         # Effects: if this is the first time we ask for the (filename,
-        #       findFile) combination, then we read and parse that 'filename',
-        #       construct a Configuration object, and remember it in the
-        #       global MEMORY
+        #	findFile) combination, then we read and parse that 'filename',
+        #	construct a Configuration object, and remember it in the
+        #	global MEMORY
         # Throws: propagates all exceptions raised by Configuration.__init__()
 
         global MEMORY
@@ -171,18 +171,18 @@ def get_Configuration (
         return config
 
 def find_path (
-        s = 'Configuration'     # str.pathname for which we're looking
+        s = 'Configuration'	# str.pathname for which we're looking
         ):
         # Purpose: find an absolute path to the "nearest" instance of 's',
-        #       first looking at the directory in which the current script
-        #       lives and then going up parent-by-parent to the root of this
-        #       directory hierarchy.
+        #	first looking at the directory in which the current script
+        #	lives and then going up parent-by-parent to the root of this
+        #	directory hierarchy.
         # Returns: absolute path to 's' or None if we can't find it
         # Assumes: nothing
         # Effects: nothing
         # Throws: nothing
         # Notes: If you specify an absolute path for 's', we do not go up the
-        #       directory hierarchy -- it either exists or it doesn't.
+        #	directory hierarchy -- it either exists or it doesn't.
 
         if os.path.isabs (s):
                 # If we are passed an absolute path, then it either exists or
@@ -203,51 +203,54 @@ def find_path (
         # to track down where it was found.
 
         if not script_path:
-                PATH = os.environ['PATH'].split(':')
+                PATH = str.split (os.environ['PATH'], ':')
                 for dir in PATH:
                         if os.path.exists (os.path.join (dir, script_name)):
                                 script_path = dir
                                 break
                 else:
-                        raise Exception('Cannot find %s in your PATH' % script_name)
+                        raise error('Cannot find %s in your PATH' % \
+                                script_name)
 
-        pieces = []     # initial set of pieces of the path to find 's',
+        pieces = []	# initial set of pieces of the path to find 's',
                         # before any clean-up takes place
 
         # if the 'script_path' is not absolute, then it is relative to the
         # current working directory...
 
         if not os.path.isabs (script_path):
-                pieces = os.getcwd().split(os.sep)
+                pieces = str.split (os.getcwd(), os.sep)
 
         # now consider the path to the script and the relative path given for
         # the config file in 's'
 
-        pieces = pieces + script_path.split(os.sep) + s.split(os.sep)
+        pieces = pieces \
+                + str.split (script_path, os.sep) \
+                + str.split (s, os.sep)
 
         # Now, go through all the 'pieces' of the path and handle any
         # '.' and '..' directories that we find.  We will build a set of
         # 'new_pieces' which will be the final components of our path.
 
-        new_pieces = [] 
+        new_pieces = []	
         for item in pieces:
-                if item == os.curdir:                   # ignore a .
+                if item == os.curdir:			# ignore a .
                         pass
-                elif item == os.pardir:                 # go up a level for ..
+                elif item == os.pardir:			# go up a level for ..
                         if len(new_pieces) > 0:
                                 del new_pieces[-1]
-                else:                                   # append anything else
+                else:					# append anything else
                         new_pieces.append (item)
 
-        pieces = new_pieces             # replace initial set with cleaned one
-        filename = pieces[-1:]          # the actual filename as a list
+        pieces = new_pieces		# replace initial set with cleaned one
+        filename = pieces[-1:]		# the actual filename as a list
 
         # now walk up the directory tree looking for the file each step of
         # the way
 
         i = len(pieces) - 1
         while i >= 0:
-                path = os.sep + os.sep.join(pieces[:i] + filename)
+                path = os.sep + str.join (pieces[:i] + filename, os.sep)
                 if os.path.exists (path):
                         return path
                 i = i - 1
@@ -256,17 +259,17 @@ def find_path (
 ###--- Classes ---###
 
 class Configuration:
-        # IS:   a set of parameters from a configuration file
-        # HAS:  zero or more parameter names, each with an associated string
-        #       value
-        # DOES: reads a configuration file, looks up the value corresponding
-        #       to a parameter name, converts parameter list into a variety
-        #       of file formats.
+        # IS:	a set of parameters from a configuration file
+        # HAS:	zero or more parameter names, each with an associated string
+        #	value
+        # DOES:	reads a configuration file, looks up the value corresponding
+        #	to a parameter name, converts parameter list into a variety
+        #	of file formats.
 
         def __init__ (self,
-                filename,               # str. name of configuration file,
+                filename,		# str. name of configuration file,
                                         # or the path to that file
-                findFile = 0            # boolean 0/1; should we traverse up
+                findFile = 0		# boolean 0/1; should we traverse up
                                         # the directory tree to find
                                         # 'filename'?
                 ):
@@ -275,15 +278,15 @@ class Configuration:
                 # Assumes: nothing
                 # Effects: reads from the file system to initialize 'self'
                 # Throws:
-                #       1. IOError - if we can't open 'filename'
-                #       2. error, ERR_MISSING - if we can't find 'filename'
-                #       3. error, ERR_UNRECOGNIZED - if the config file has
-                #               a first line which specifies an unrecognized
-                #               format (not tab, sh, or csh)
-                #       4. propagates error from find_path if we cannot find
-                #               the script in the user's PATH
+                #	1. IOError - if we can't open 'filename'
+                #	2. error, ERR_MISSING - if we can't find 'filename'
+                #	3. error, ERR_UNRECOGNIZED - if the config file has
+                #		a first line which specifies an unrecognized
+                #		format (not tab, sh, or csh)
+                #	4. propagates error from find_path if we cannot find
+                #		the script in the user's PATH
 
-                self.options = {}       # options[parm name] = str.value
+                self.options = {}	# options[parm name] = str.value
 
                 # if we need to traverse up the directory tree to find the
                 # given filename, then do so.  If we don't find it, then raise
@@ -292,26 +295,27 @@ class Configuration:
                 if findFile == 1:
                         filename = find_path (filename)
                         if filename is None:
-                                raise Exception(ERR_MISSING)
+                                raise error(ERR_MISSING)
 
                 # load the configuration file and proceed to parse it.
+
                 fp = open (filename, 'r')
                 lines = fp.readlines()
                 fp.close ()
 
-                if len(lines) == 0:             # no config options
+                if len(lines) == 0:		# no config options
                         return
 
-                regexes = [ re_tabbed ]         # assume default 'tab' format
+                regexes = [ re_tabbed ]		# assume default 'tab' format
 
                 # check for other formats, as specified in the first line:
 
                 format_match = re_format.match(lines[0])
                 if format_match:
                         format = format_match.group(1)
-                        if format == 'tab':             # tab-delimited
+                        if format == 'tab':		# tab-delimited
                                 pass
-                        elif format == 'sh':            # Bourne shell
+                        elif format == 'sh':		# Bourne shell
                                 regexes = [ re_shell ]
 
                         # if C shell, we need to look for set & setenv parms
@@ -319,7 +323,7 @@ class Configuration:
                         elif format == 'csh':
                                 regexes = [ re_cshell1, re_cshell2 ]
                         else:
-                                raise Exception(ERR_UNRECOGNIZED)
+                                raise error(ERR_UNRECOGNIZED)
                         del lines[0]
 
                 # parse the remaining lines in the file, ignoring comments and
@@ -340,7 +344,7 @@ class Configuration:
                 # PYTHONPATH of the currently executing process:
 
                 if 'LIBDIRS' in self.options:
-                        libdirs = self['LIBDIRS'].split(':')
+                        libdirs = str.split (self['LIBDIRS'], ':')
                         libdirs.reverse()
                         for libdir in libdirs:
                                 if libdir not in sys.path:
@@ -358,10 +362,10 @@ class Configuration:
         ###--- Dictionary-Compatible Methods ---###
 
         def __getitem__ (self,
-                key             # str. parameter name
+                key		# str. parameter name
                 ):
                 # Purpose: get the value associated with 'key', in a
-                #       dictionary-style manner
+                #	dictionary-style manner
                 # Returns: str. parameter value for 'key'
                 # Assumes: nothing
                 # Effects: nothing
@@ -379,22 +383,22 @@ class Configuration:
                 return len(self.options)
 
         def __setitem__ (self,
-                key,            # str. parameter name
-                value           # str. parameter value
+                key,		# str. parameter name
+                value		# str. parameter value
                 ):
                 # Purpose: set the 'value' associated with  'key', in a
-                #       dictionary-style manner
+                #	dictionary-style manner
                 # Returns: nothing
                 # Assumes: nothing
                 # Effects: updates self.options to reflect the new value
-                #       associated with 'key', overwriting any existing one
+                #	associated with 'key', overwriting any existing one
                 # Throws: nothing
 
                 self.options[key] = value
                 return
 
         def has_key (self,
-                key             # str. parameter name
+                key		# str. parameter name
                 ):
                 # Purpose: test to see if 'key' is a valid parameter name
                 # Returns: boolean; 0 if no 'key' parameter, or 1 if it exists
@@ -407,17 +411,17 @@ class Configuration:
         def items (self):
                 # Purpose: get the whole set of parameter names and values
                 # Returns: a list of tuples, each containing two str.:
-                #       (parameter name, parameter value)
+                #	(parameter name, parameter value)
                 # Assumes: nothing
                 # Effects: nothing
                 # Throws: nothing
                 # Notes: This function resolves any parameter names embedded
-                #       within other parameter values.  If you want the raw
-                #       values as read from the configuration file, see the
-                #       self.rawItems() method instead.
+                #	within other parameter values.  If you want the raw
+                #	values as read from the configuration file, see the
+                #	self.rawItems() method instead.
 
                 list = []
-                for name in list:
+                for name in self.keys():
                         list.append ( (name, self[name]) )
                 return list
 
@@ -439,8 +443,8 @@ class Configuration:
                 # Effects: nothing
                 # Throws: nothing
                 # Notes: This method does not resolve any parameter names
-                #       which are embedded within other parameter values.
-                #       See self.__getitem__() for that functionality.
+                #	which are embedded within other parameter values.
+                #	See self.__getitem__() for that functionality.
                 return self.options[key]
 
 
@@ -465,7 +469,7 @@ class Configuration:
                 
                 temp = {}
                 
-                for key in list(self.keys()):
+                for key in self.keys():
                         temp[key] = self.resolve(key)
                 
                 return temp
@@ -473,52 +477,53 @@ class Configuration:
 
 
         def check_keys (self,
-                desired_keys    # list of str.; each str.is one key that
+                desired_keys	# list of str.; each str.is one key that
                                 # should be defined in the config file
                 ):
                 # Purpose: check that all the 'desired_keys' are, in fact,
-                #       defined
+                #	defined
                 # Returns: nothing
                 # Assumes: nothing
                 # Effects: nothing
                 # Throws: error.ERR_UNKNOWN_KEYS if we encounter one or more
-                #       'desired_keys' which are not defined in this object
+                #	'desired_keys' which are not defined in this object
                 # Notes: This method would often be used by a script to see
-                #       that all its needed config parameters are defined
-                #       before it begins its real work.
+                #	that all its needed config parameters are defined
+                #	before it begins its real work.
 
                 unknown = []
                 for key in desired_keys:
-                        if key not in self.options:
+                        if key not in self:
                                 unknown.append (key)
                 if unknown:
-                        raise Exception(ERR_UNKNOWN_KEYS % ', '.join(unknown))
+                        raise error(ERR_UNKNOWN_KEYS % \
+                                str.join (unknown, ', '))
                 return
 
         def get (self,
-                key             # str. parameter name
+                key		# str. parameter name
                 ):
                 # Purpose: get the value associated with 'key', wrapper for
-                #       __getitem__
+                #	__getitem__
                 # Returns: str. parameter value associated with 'key'
                 # Assumes: nothing
                 # Effects: nothing
                 # Throws: propagates KeyError if 'key' is not a known
-                #       parameter name
+                #	parameter name
 
                 return self[key]
 
         def lookup (self,
-                key             # str. parameter name
+                key		# str. parameter name
                 ):
                 # Purpose: get the value associated with 'key', or None if
-                #       'key' is not a known parameter name
+                #	'key' is not a known parameter name
                 # Returns: str.or None; see Purpose
                 # Assumes: nothing
                 # Effects: nothing
                 # Throws: nothing
 
-                if key in self.options:
+                if key in self:
                         return self[key]
                 return None
 
@@ -526,9 +531,9 @@ class Configuration:
 
         def asCsh (self):
                 # Purpose: build a C-shell version of the configuration
-                #       parameters and values
+                #	parameters and values
                 # Returns: a list of str., used to set the configuration
-                #       options for C-shell scripts
+                #	options for C-shell scripts
                 # Assumes: nothing
                 # Effects: nothing
                 # Throws: nothing
@@ -538,9 +543,9 @@ class Configuration:
 
         def asSh (self):
                 # Purpose: build a Bourne shell version of the configuration
-                #       parameters and values
+                #	parameters and values
                 # Returns: a list of str., used to set the configuration
-                #       options for Bourne shell scripts
+                #	options for Bourne shell scripts
                 # Assumes: nothing
                 # Effects: nothing
                 # Throws: nothing
@@ -553,9 +558,9 @@ class Configuration:
 
         def asTab (self):
                 # Purpose: build a tab-delimited version of the configuration
-                #       parameters and values
+                #	parameters and values
                 # Returns: a list of str., with the parameter name
-                #       followed by a tab and the parameter value
+                #	followed by a tab and the parameter value
                 # Assumes: nothing
                 # Effects: nothing
                 # Throws: nothing
@@ -563,18 +568,18 @@ class Configuration:
                 return ['%s\t%s' % (field_value1[0], field_value1[1]) for field_value1 in list(self.items())]
 
         def write (self,
-                file=sys.stdout,        # file pointer; file to write to
-                format='tab'            # str. 'tab', 'csh', or 'sh'
+                file=sys.stdout,	# file pointer; file to write to
+                format='tab'		# str. 'tab', 'csh', or 'sh'
                 ):
                 # Purpose: write the configuration parameters out to a file
-                #       in a given format, with a header line specifying the
-                #       format
+                #	in a given format, with a header line specifying the
+                #	format
                 # Returns: nothing
                 # Assumes: nothing
                 # Effects: writes one or more lines to 'file'
                 # Throws:
-                #       1. IOError if we cannot write to 'file'
-                #       2. error, ERR_UNRECOGNIZED - if 'format' is unknown
+                #	1. IOError if we cannot write to 'file'
+                #	2. error, ERR_UNRECOGNIZED - if 'format' is unknown
 
                 if format == 'tab':
                         lines = self.asTab()
@@ -583,7 +588,7 @@ class Configuration:
                 elif format == 'csh':
                         lines = self.asCsh()
                 else:
-                        raise Exception(ERR_UNRECOGNIZED)
+                        raise error(ERR_UNRECOGNIZED)
 
                 file.write ('#format: %s\n' % format)
                 for line in lines:
@@ -592,59 +597,55 @@ class Configuration:
 
         ###--- Convienance Methods ---###
         def merge(self, config):
-            # Purpose: Merge two configuration files together, giving preference to values
-            #          stored in the current object.
-            # Returns: nothing
-            # Assumes: nothing
-            # Effects: Adds all of the values that are not in the present object, into the present object.
-            # Throws:
+                # Purpose: Merge to configuration files together, giving preference to values
+                #	   stored in the current object.
+                # Returns: nothing
+                # Assumes: nothing
+                # Effects: Adds all of the values that are not in the present object, into the present object.
+                # Throws:
                 
-            for key in list(config.keys()):
-                if key not in self.options:
-                    self[key] = config.getUnresolvedValue(key)
-            return
+                for key in list(config.keys()):
+                        if key not in self:
+                                self[key] = config.getUnresolvedValue(key)
 
         ###--- Private Methods ---###
 
         def rawItems (self):
                 # Purpose: get the whole set of parameter names and values
                 # Returns: a list of tuples, each containing two str.:
-                #       (parameter name, parameter value)
+                #	(parameter name, parameter value)
                 # Assumes: nothing
                 # Effects: nothing
                 # Throws: nothing
                 # Notes: This method does not resolve any parameter names
-                #       which are embedded within other parameter values.
-                #       See self.items() for that functionality.
+                #	which are embedded within other parameter values.
+                #	See self.items() for that functionality.
 
-                return list(self.options.items())     
+                return list(self.options.items())	
         
         def resolve (self,
-                key,            # str. parameter name
-                steps = 100     # integer; maximum recursive levels allowed
+                key,		# str. parameter name
+                steps = 100	# integer; maximum recursive levels allowed
                 ):
                 # Purpose: return the value of the parameter named 'key',
-                #       with any embedded parameter references ( ${PARM} )
-                #       having been resolved if we can do it in under the
-                #       given number of 'steps'
+                #	with any embedded parameter references ( ${PARM} )
+                #	having been resolved if we can do it in under the
+                #	given number of 'steps'
                 # Returns: string
                 # Assumes: nothing
                 # Effects: nothing
                 # Throws: raises a KeyError if 'key' is not one of the
-                #       parameter names.  raises 'error' if 'steps' reaches
-                #       zero.
+                #	parameter names.  raises 'error' if 'steps' reaches
+                #	zero.
                 # Notes: Mainly, we use 'steps' to prevent an infinite loop if
-                #       we have two parameters that reference each other, like
-                #               A       "My ${B} value"
-                #               B       "My ${A} value"
-                #       or one references itself like
-                #               A       "My ${A} value"
+                #	we have two parameters that reference each other, like
+                #		A	"My ${B} value"
+                #		B	"My ${A} value"
+                #	or one references itself like
+                #		A	"My ${A} value"
 
                 if steps == 0:
-                        raise Exception('Could not resolve parameter.')
-                
-                if key not in self.options:
-                    return None
+                        raise error('Could not resolve parameter.')
                 s = self.options[key]
                 re_search_match = re_parm.search(s)
                 while re_search_match:
