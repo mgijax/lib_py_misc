@@ -49,18 +49,6 @@ def splitter (s):
         sdict[s] = tuple(items)
         return sdict[s]
 
-def nomenCompare (s1, s2):
-        # Purpose: compare str. s1 and s2
-        # Returns: an integer;	negative if s1 < s2,
-        #			0 if s1 == s2,
-        #			positive if s1 > s2
-        # Assumes: s1 and s2 are str.
-        # Effects: nothing
-        # Throws: nothing
-        # Notes: considers numerics which may be included in s1 & s2, so that
-        #	'Abc9' sorts before 'Abc10', for example
-
-        return cmp(splitter(s1), splitter(s2))
 #
 # Warranty Disclaimer and Copyright Notice
 # 

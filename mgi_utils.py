@@ -338,11 +338,6 @@ def date( format = '%c' ):
                 s = 'Error:  mgi_utils.date( ' + str(format) + ' )'
         return s
 
-
-# aliases
-#byFilename = symbolsort.nomenCompare
-#bySymbol = symbolsort.nomenCompare
-
 def setAlarm(timeout, alarmclock=AlarmClock):
         # Schedule a UNIX alarm call after timeout seconds
         signal(SIGALRM, alarmclock)
