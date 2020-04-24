@@ -9,10 +9,6 @@
 # It also defines functions that operate on TableDataSet's (these would likely
 #   be class methods if this were in Java.)
 
-#import ignoreDeprecation
-#import sys
-#import os
-import string
 import types
 
 DEBUG = 0
@@ -775,7 +771,7 @@ class TableDataSet:
                 fn = fieldnames[i]
                 if self.isMultiValued( fn):
                     values = list(map(str, rcd[fn])) # convert all values to strings
-                    value = string.join( values, self.multiValuedFields[fn])
+                    value = str.join( self.multiValuedFields[fn], values)
                 else:   # single valued field
                     value = rcd[fn]
                     if value == None:
@@ -1086,7 +1082,7 @@ class TextFileTableDataSet (TableDataSet):
 
         global DEBUG
 
-        fieldvalues = string.split( line, self.fieldDelim)
+        fieldvalues = str.split( line, self.fieldDelim)
         if DEBUG:
             print(fieldvalues)
 
@@ -1140,7 +1136,7 @@ class TextFileTableDataSet (TableDataSet):
     # Returns: a list of trimmed, non-empty strings that are the delimited
     #           values for the field.
 
-        unstrippedValues = string.split( value,
+        unstrippedValues = str.split( value,
                                         self.multiValuedFields[ fieldname])
         values = []             # the values to return
         for s in unstrippedValues:
