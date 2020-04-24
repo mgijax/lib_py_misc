@@ -139,7 +139,7 @@ class RcdFile:
                 self.constants = {}		# set of constants
                 self.filename = filename	# name of the file to read
 
-                fp = open (filename, 'r')	# open the file for reading
+                fp = open (filename, 'r', encoding="utf-8")	# open the file for reading
 
                 state = OUT_RCD		# initially, we're outside an Rcd def
 
