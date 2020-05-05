@@ -32,18 +32,18 @@ def splitter (s):
                 return sdict[s]
         last = 0
         items = []
-        sl = str.lower (s)
+        sl = s.lower (s)
         in_digits = sl[0] in digits
         for i in range(0, len(sl)):
                 if (sl[i] in digits) != in_digits:
                         if in_digits:
-                                items.append (str.atoi(sl[last:i]))
+                                items.append (int(sl[last:i]))
                         else:
                                 items.append (sl[last:i])
                         last = i
                         in_digits = not in_digits
         if in_digits:
-                items.append (str.atoi (sl[last:]))
+                items.append (int(sl[last:]))
         else:
                 items.append (sl[last:])
         sdict[s] = tuple(items)
