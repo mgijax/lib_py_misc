@@ -1,13 +1,7 @@
-# Purpose: provide a nomenCompare() function to replace the byNumeric(),
-#	bySymbol(), and byFilename() functions in the WI's version of
-#	mgd_utils.py
-# Notes:
-#	At some point, this mgd_utils should be pulled out of the WI and CCR.
-#	The code here should supercede that in the WI, as noted in the Purpose
-#	above.  This remedies a bug in the WI whereby Ren1 == ren2 for sorting
-#	purposes.
-#	This file is now also used in the ratpages.  It should be pulled out
-#	of there as well.
+# Name: symbolsort.py
+# Purpose: provide a splitter() function that can be shared across Python products to
+#    consistently split an alphanumeric string into a tuple of integers and strings for
+#    sorting.
 
 # global dictionaries used by splitter() for speedy lookups:
 
@@ -17,17 +11,26 @@ digits = {	'1' : 1,	'2' : 1,	'3' : 1,	'4' : 1,
                 '9' : 1,	'0' : 1	}
 
 def splitter (s):
-        # Purpose: split str.'s' into a tuple of str. and integers,
-        #	representing the contents of 's'
-        # Returns: tuple containing a list of str. and integers
-        # Assumes: s is a string
+        # Purpose: split string 's' into a tuple of strings and integers,
+        #   representing the contents of 's' for sorting purposes
+        # Returns: tuple containing a list of strings and integers
+        # Assumes: s is a string or None
         # Effects: nothing
         # Throws: nothing
+        # Notes: Because Python 3.7 does not allow strings to be compared with 
+        #   integers, we must ensure that all tuples have the same ordering of 
+        #   integers and strings.
+        #   (So even for ones that would begin with a string, we'll prepend an integer
+        #    to force it to appear after those beginning with integers.)
         # Examples:
-        #	'Ren1' ==> ('Ren', 1)
-        #	'abc123def' ==> ('abc', 123, 'def')
+        #       'Ren1' ==> (9999999, 'ren', 1)
+        #       'abc123def' ==> (9999999, 'abc', 123, 'def')
+        #       '789xyz32' ==> (789, 'xyz', 32)
 
         global sdict
+
+        if s == None:
+            return (99999999,)
         if s in sdict:
                 return sdict[s]
         last = 0
@@ -46,6 +49,10 @@ def splitter (s):
                 items.append (int(sl[last:]))
         else:
                 items.append (sl[last:])
+
+        if type(items[0]) != int:
+            items.insert(0, 9999999)
+
         sdict[s] = tuple(items)
         return sdict[s]
 
