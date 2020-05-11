@@ -10,6 +10,8 @@ digits = {	'1' : 1,	'2' : 1,	'3' : 1,	'4' : 1,
                 '5' : 1,	'6' : 1,	'7' : 1,	'8' : 1,
                 '9' : 1,	'0' : 1	}
 
+intPrefix = 9999999999
+
 def splitter (s):
         # Purpose: split string 's' into a tuple of strings and integers,
         #   representing the contents of 's' for sorting purposes
@@ -23,14 +25,14 @@ def splitter (s):
         #   (So even for ones that would begin with a string, we'll prepend an integer
         #    to force it to appear after those beginning with integers.)
         # Examples:
-        #       'Ren1' ==> (9999999, 'ren', 1)
-        #       'abc123def' ==> (9999999, 'abc', 123, 'def')
+        #       'Ren1' ==> (999999999, 'ren', 1)
+        #       'abc123def' ==> (9999999999, 'abc', 123, 'def')
         #       '789xyz32' ==> (789, 'xyz', 32)
 
         global sdict
 
         if s == None:
-            return (99999999,)
+            return (intPrefix,)
         if s in sdict:
                 return sdict[s]
         last = 0
@@ -51,7 +53,7 @@ def splitter (s):
                 items.append (sl[last:])
 
         if type(items[0]) != int:
-            items.insert(0, 9999999)
+            items.insert(0, intPrefix)
 
         sdict[s] = tuple(items)
         return sdict[s]
