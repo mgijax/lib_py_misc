@@ -1,4 +1,4 @@
-
+#!/opt/python3.7/bin/python3.7
 # Name: Configuration.py
 # Purpose: provide a uniform means for accessing files of configuration
 #	parameters in different formats
@@ -250,7 +250,7 @@ def find_path (
 
         i = len(pieces) - 1
         while i >= 0:
-                path = os.sep + str.join (pieces[:i] + filename, os.sep)
+                path = os.sep + os.sep.join (pieces[:i] + filename)
                 if os.path.exists (path):
                         return path
                 i = i - 1
@@ -605,7 +605,7 @@ class Configuration:
                 # Throws:
                 
                 for key in list(config.keys()):
-                        if key not in self:
+                        if not self.has_key(key):
                                 self[key] = config.getUnresolvedValue(key)
 
         ###--- Private Methods ---###
