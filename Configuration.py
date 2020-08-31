@@ -493,7 +493,7 @@ class Configuration:
 
                 unknown = []
                 for key in desired_keys:
-                        if key not in self:
+                        if not self.has_key(key):
                                 unknown.append (key)
                 if unknown:
                         raise error(ERR_UNKNOWN_KEYS % \
@@ -523,7 +523,7 @@ class Configuration:
                 # Effects: nothing
                 # Throws: nothing
 
-                if key in self:
+                if self.has_key(key):
                         return self[key]
                 return None
 
