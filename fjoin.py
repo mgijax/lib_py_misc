@@ -210,13 +210,14 @@ class FJoin:
             action="store_true", dest="pVersion", default=False,
             help="Print program name and version, and exit.")
 
-        self.parser.add_option("-k", metavar="[+-]N[%]",
+        self.parser.add_option("-k", metavar="[+-]N[%] | ==",
             action="store", dest="k", default=None,
-            help="Minimum overlap amount. (Default: 1) " + \
-            "Examples: -k100 : overlap of at least 100 bases. " + \
-            "-k-1000 : separated by no more than 1 kb. " 
-               "-k50% : overlap of >= 50% of longer of pair. " + \
-               "-k-85% : overlap of >= 85% of shorter of pair. " + \
+            help="Overlap amount. (Default: 1) " + \
+            "Examples: -k 100 : overlap of at least 100 bases. " + \
+            "-k -1000 : separated by no more than 1 kb. " 
+               "-k 50% : overlap of >= 50% of longer of pair. " + \
+               "-k -85% : overlap of >= 85% of shorter of pair. " + \
+               "-k == : coordinates must match exactly." + \
                "")
 
         self.parser.add_option("-c", 
@@ -347,6 +348,7 @@ class FJoin:
 
 
         self.isPercent = False
+        self.isExact = False
         if self.options.k is None:
             # default is 1 base overlap
             self.k = 1
@@ -357,6 +359,9 @@ class FJoin:
                 self.parser.error( \
                         "Percentage must be between 0 and 100, inclusive.")
             self.isPercent = True
+        elif self.options.k == "==" :
+            self.isExact = True
+            self.k = None
         else:
             self.k = int(self.options.k)
 
@@ -428,6 +433,12 @@ class FJoin:
         """If a and b overlap by at least k (specified on cmd line),
         returns the amount of overlap. Otherwise, returns None. 
         """
+        if self.isExact:
+            if a.start == b.start and a.end == b.end:
+                return self.length(a)
+            else:
+                return None
+        #
         k = self.k
         if self.isPercent:
             la = self.length(a)
@@ -436,6 +447,7 @@ class FJoin:
                 k = (-k * min(la,lb))/100
             else:
                 k = (k * max(la,lb))/100
+        #
         v = min(a.end,b.end) - max(a.start,b.start) + self.CADJUST
         if v >= k:
             return v
@@ -453,7 +465,7 @@ class FJoin:
         """Returns true iff a is left of position p, adjusted for k.
         """
         k = self.k
-        if self.isPercent:
+        if self.isPercent or self.isExact:
             k = 0
         return (a.end < (p + k - self.CADJUST))
 
