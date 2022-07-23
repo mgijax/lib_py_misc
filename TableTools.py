@@ -1405,7 +1405,34 @@ class CCA:
     def getCid(self, n):
         return self.visited[n]
 
-    def reach(self, n):
+    # ireach - Iterative depth-first search. Uses a loop and a stack
+    # Avoids the problem with max recursion limits of a recursive implementation.
+    def ireach(self, n0):
+        # each stack element is a list of nodes to process as a group (ie, list of child noded)
+        stack = [[n0]]
+        while len(stack):
+            nlst = stack[-1]
+            if len(nlst) == 0:
+                stack.pop()
+                continue
+            n = nlst.pop(0)
+            if n in self.visited:
+                continue
+            #print("Ireach:", n, len(stack-1))
+            self.visited[n] = self.cid
+            if n[1] is not None:
+                if n[0] == "A":
+                    self.na += 1
+                elif n[0] == "B":
+                    self.nb += 1
+            self.cc[n] = n
+            # push a copy of the neighbor array, since the above processing is destructive
+            neighbors = self.graph.nodes[n].copy()
+            stack.append(neighbors)
+    
+    #
+    def reach(self, n, depth):
+        #print("Reach:", n, depth)
         self.visited[n] = self.cid
         if n[1] is not None:
             if n[0] == "A":
@@ -1416,7 +1443,7 @@ class CCA:
         neighbors = self.graph.nodes[n]
         for n2 in neighbors:
             if n2 not in self.visited:
-                self.reach(n2)
+                self.reach(n2, depth+1)
 
     def getCount(self, n):
         if n == 0:
@@ -1436,7 +1463,14 @@ class CCA:
                 self.na = 0
                 self.nb = 0
                 self.cid += 1
-                self.reach(n) 
+                try:
+                    #self.reach(n,0) 
+                    self.ireach(n) 
+                except:
+                    print("ERROR")
+                    print(n)
+                    print(self.visited)
+                    sys.exit(1)
                 for cn in sorted(self.cc.keys()):
                     self.visited[cn] = (self.visited[cn], self.getBucket())
 
