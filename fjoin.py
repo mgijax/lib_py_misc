@@ -165,9 +165,10 @@ class FJoin:
         self.ofd = sys.stdout   # the output file desc
         self.lfd = sys.stderr   # the log file desc
 
-        self.k = 1              # user's min overlap amount
-        self.isPercent = False  # is k a percentage (True),
-                                # or absolute (False)?
+        self.k1 = 1             # min overlap amount for the shorter feature
+        self.isPercent1 = False # is k1 a percentage (True) or basepairs (False)
+        self.k2 = 1             # min overlap amount for thelonger feature
+        self.isPercent2 = False # is k2 a percentage (True), of basepairs (False)
 
         self.xStream = None     # the X stream
         self.yStream = None     # the Y stream
@@ -210,15 +211,22 @@ class FJoin:
             action="store_true", dest="pVersion", default=False,
             help="Print program name and version, and exit.")
 
-        self.parser.add_option("-k", metavar="[+-]N[%] | ==",
-            action="store", dest="k", default=None,
-            help="Overlap amount. (Default: 1) " + \
-            "Examples: -k 100 : overlap of at least 100 bases. " + \
-            "-k -1000 : separated by no more than 1 kb. " 
-               "-k 50% : overlap of >= 50% of longer of pair. " + \
-               "-k -85% : overlap of >= 85% of shorter of pair. " + \
-               "-k == : coordinates must match exactly." + \
-               "")
+        self.parser.add_option("-k", metavar="AMT[,AMT]",
+            action="store", dest="k", default="1",
+            help='''Minimum overlap. 
+                To specify a minimum number of bases that overlaps must include, provide an integer.
+                E.g., to require at least 10 bases of overlap, specify "-k 10".
+                The default for this parameter is "-k 1".
+                Providing a negative integer specifies maximum separation.
+                E.g., to require a maximum separation of 100 bases, specify "-k -100".
+                You can specify minimum overlap as a percentage of the feature length by appending a "%".
+                E.g. to specify at least 50% of each feature overlaps, "-k 50%".
+                You can specify different amounts for the two features by providing two amounts separated by a comma (no spaces).
+                The first amount is for the shorter feature and the second for the longer.
+                E.g., to require overlaps to include at least 80% of the length the shorter feature and 20% of the longer feature, specify "-k 80%,20%.".
+                Finally, you can combine a percent with a base-pair amount.
+                E.g., to require overlaps to include the entirety of the shorter feature and at least one base the longer feature, specify "-k 100%,1".
+                ''')
 
         self.parser.add_option("-c", 
             action="store_true", dest="continuous", default=False,
@@ -295,6 +303,37 @@ class FJoin:
     def validate(self):
         """Checks that args are valid, opens files, and generally gets set up.
         """
+        def parseKamount(amt):
+            isPct = False
+            amt = amt.strip()
+            if amt[-1] == "%":
+                isPct = True
+                amt = amt[:-1]
+            amt = int(amt)
+            if isPct and (amt <=0 or amt > 100):
+                self.parser.error("Error in -k parameter: percentage amount must be >0 and <=100.")
+            return (amt,isPct)
+
+        self.isMaxSep = False
+        if self.options.k:
+            parts = self.options.k.split(",")
+            try:
+                if len(parts) == 1:
+                    self.k1,self.isPercent1 = parseKamount(parts[0])
+                    self.k2,self.isPercent2 = self.k1,self.isPercent1
+                    self.isMaxSep = self.k1 < 0
+                elif len(parts) == 2:
+                    self.k1,self.isPercent1 = parseKamount(parts[0])
+                    self.k2,self.isPercent2 = parseKamount(parts[1])
+                else:
+                    raise RuntimeError()
+            except:
+                self.parser.error("Could not parse parameter value: -k %s" % self.options.k)
+
+        #print (self.k1,self.isPercent1)
+        #print (self.k2,self.isPercent2)
+        #sys.exit(0)
+
         if self.options.lfile == "-":
             self.lfd = sys.stderr
         else:
@@ -347,24 +386,6 @@ class FJoin:
             self.ofd = open(self.options.ofile, 'w')
 
 
-        self.isPercent = False
-        self.isExact = False
-        if self.options.k is None:
-            # default is 1 base overlap
-            self.k = 1
-        elif self.options.k[-1] == "%":
-            # percent overlap
-            self.k = int(self.options.k[:-1])
-            if self.k < -100 or self.k > 100:
-                self.parser.error( \
-                        "Percentage must be between 0 and 100, inclusive.")
-            self.isPercent = True
-        elif self.options.k == "==" :
-            self.isExact = True
-            self.k = None
-        else:
-            self.k = int(self.options.k)
-
         if self.options.continuous:
             self.CADJUST = float(0)
         else:
@@ -388,7 +409,7 @@ class FJoin:
             else:
                 self.lastPick = 1
                 self.scan(y, self.getWindow(y, self.key2Wy),
-                          x, self.getWindow(y, self.key2Wx)) 
+                          x, self.getWindow(y, self.key2Wx))
                 y = next(self.yStream)
 
         self.finishStats()
@@ -433,23 +454,19 @@ class FJoin:
         """If a and b overlap by at least k (specified on cmd line),
         returns the amount of overlap. Otherwise, returns None. 
         """
-        if self.isExact:
-            if a.start == b.start and a.end == b.end:
-                return self.length(a)
-            else:
-                return None
-        #
-        k = self.k
-        if self.isPercent:
-            la = self.length(a)
-            lb = self.length(b)
-            if k < 0:
-                k = (-k * min(la,lb))/100
-            else:
-                k = (k * max(la,lb))/100
+        if self.length(a) < self.length(b):
+            shorter,longer = a,b
+        else:
+            shorter,longer = b,a
+        k1 = self.k1
+        if self.isPercent1:
+            k1 = round((self.k1 * self.length(shorter)) / 100)
+        k2 = self.k2
+        if self.isPercent2:
+            k2 = round((self.k2 * self.length(longer)) / 100)
         #
         v = min(a.end,b.end) - max(a.start,b.start) + self.CADJUST
-        if v >= k:
+        if v >= k1 and v >= k2:
             return v
         else:
             return None
@@ -462,11 +479,11 @@ class FJoin:
 
     #-------------------------------------
     def leftOf(self, a, p):
-        """Returns true iff a is left of position p, adjusted for k.
+        """Returns true iff a is left of position p, adjusted for k, if k specifies a max separation (i.e. is negative).
         """
-        k = self.k
-        if self.isPercent or self.isExact:
-            k = 0
+        k = 0
+        if self.isMaxSep:
+            k = self.k1
         return (a.end < (p + k - self.CADJUST))
 
     #-------------------------------------
