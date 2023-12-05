@@ -1,3 +1,31 @@
+TAG: lib_py_misc-6-0-22-?
+DATE: 12/05/2023
+STAFF: lec
+wts2-1345/fl2-659/lib_py_misc/mgi_utils : remove obsolete functions
+# obsolete:
+# def AlarmClock()
+# def mkdirs()
+# def olddebug()
+# def show_count()
+# def plural()
+# def pc()
+# def vali_date()
+# def sepa_date()
+# def formu_date()
+# def value()
+# def strval()
+# def prstar(o)
+# def setAlarm()
+# def addQuotes()
+# def joinPaths()
+# def askUserForOneChar()
+#
+# still used:
+# def prvalue()
+# def date()
+# def send_Mail()
+#
+
 TAG: lib_py_misc-6-0-22-1
 DATE: 11/21/2023
 STAFF: lec
