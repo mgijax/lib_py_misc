@@ -1,4 +1,4 @@
-#!/opt/python/bin/python
+#!/opt/python3.7/bin/python3.7
 # Name: Configuration.py
 # Purpose: provide a uniform means for accessing files of configuration
 #	parameters in different formats
