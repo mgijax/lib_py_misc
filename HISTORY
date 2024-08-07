@@ -1,3 +1,10 @@
+TAG: lib_py_misc-6-0-24-1
+DATE: 08/07/2024
+STAFF: lec
+wts2-1397/fl2-941/Migration to Rocky OS
+# modified:   Configuration.py
+use /opt/python/bin/python
+
 TAG: lib_py_misc-6-0-23-2
 TAG: lib_py_misc-6-0-23-1
 DATE: 03/25/2024
